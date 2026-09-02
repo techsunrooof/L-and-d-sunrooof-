@@ -3,17 +3,29 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import * as schema from "./schema";
 
 /*
-  Local-first SQLite. One file at ./data/portal.db. Tables are created on first
-  import (idempotent), so `npm run dev` just works with no migration step.
+  Local-first SQLite. Locally the file lives at ./data/portal.db and tables are
+  created on first import (idempotent), so `npm run dev` just works.
 
-  Swapping to Supabase/Postgres later means changing only this file + the
-  drizzle dialect — the schema and all query code stay the same.
+  On a read-only serverless filesystem (e.g. Vercel) ./data can't be written, so
+  we fall back to the OS temp dir just so the app BOOTS. That storage is
+  EPHEMERAL — progress does NOT persist across instances/cold starts. For a real
+  deployment, swap this SQLite layer for Supabase/Postgres (the schema and all
+  query code stay the same). Set DATABASE_FILE to override the path.
 */
 
-const DB_PATH = path.join(process.cwd(), "data", "portal.db");
+function resolveDbPath(): string {
+  if (process.env.DATABASE_FILE) return process.env.DATABASE_FILE;
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join(os.tmpdir(), "sunrooof-ld", "portal.db");
+  }
+  return path.join(process.cwd(), "data", "portal.db");
+}
+
+const DB_PATH = resolveDbPath();
 mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
 // Reuse a single connection across hot reloads in dev.
