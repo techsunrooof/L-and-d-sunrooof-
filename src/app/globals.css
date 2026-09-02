@@ -1,26 +1,78 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  SUNROOOF Learning & Development — design tokens.
+  The interface is white with black type. All colour comes from photography.
+  Sun gold is the ONLY strong interface colour and means "you are here / do this next".
+  No red anywhere — locked is grey and quiet, never an error.
+*/
+
+@theme {
+  /* Surfaces & type */
+  --color-paper: #ffffff;      /* page background, cards, sidebar */
+  --color-ink: #111111;        /* headings and body text */
+  --color-grey: #8a8a8a;       /* secondary text and captions */
+  --color-hairline: #eaeaea;   /* every border and divider */
+
+  /* Accents */
+  --color-sun: #f0a500;        /* current step, progress, primary button */
+  --color-warm: #fbf4e6;       /* soft tint behind the active sidebar item */
+
+  /* The one quiet green, used only for a completed tick — never for surfaces */
+  --color-success: #3c9a6b;
+
+  /* Video stage — black behind a loading thumbnail */
+  --color-stage: #111111;
+
+  /* Fonts (wired to next/font variables in layout.tsx) */
+  --font-display: var(--font-sora);      /* page + card titles only */
+  --font-body: var(--font-inter);        /* body text */
+  --font-mono: var(--font-plex-mono);    /* video numbers 1.1, 1.2 … */
+
+  --radius-card: 11px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Sentence case everywhere; never rely on uppercase transforms. */
+
+/* Visible focus ring for keyboard navigation (section 12.2). */
+:focus-visible {
+  outline: 2px solid var(--color-sun);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* A card: white, 1px hairline border, soft radius. No shadow, no gradient. */
+.card {
+  background: var(--color-paper);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+}
+
+/* Locked media: desaturated and dimmed, regains full colour on unlock. */
+.media-locked {
+  filter: grayscale(1);
+  opacity: 0.5;
+  transition: filter 0.4s ease, opacity 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

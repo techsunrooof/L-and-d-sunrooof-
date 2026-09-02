@@ -30,8 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (never commit real values) — but DO commit the example
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local-first data + generated media
+/data
+
+# Large video media belongs in object storage (e.g. Supabase), not git.
+# Documents (compressed PDFs) under /media/documents ARE committed.
+/media/videos
