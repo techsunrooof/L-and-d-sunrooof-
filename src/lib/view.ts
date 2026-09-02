@@ -11,6 +11,7 @@ import {
   dayImage,
   videoThumbnail,
   activitiesForDay,
+  DEPARTMENTS,
   type Assessment,
   type ModuleItem,
   type ItemKind,
@@ -106,6 +107,35 @@ export type HomeDayVM = {
   /** In-person activities shown as distinct rows (§5). */
   activities: HomeActivityVM[];
 };
+
+/** Home is two parts (§2): the common induction (Days 1–3) and the department
+ *  tracks (only Sales so far). Each part keeps its OWN progress (§5). */
+export type HomeDepartmentVM = { name: string; days: HomeDayVM[]; currentDay: number };
+export type HomeSectionsVM = {
+  induction: HomeDayVM[];
+  inductionCurrentDay: number;
+  departments: HomeDepartmentVM[];
+};
+
+/** Current day of a group: first not-complete, else the last. */
+function currentOf(days: HomeDayVM[]): number {
+  const firstIncomplete = days.find((d) => d.status !== "complete");
+  return firstIncomplete ? firstIncomplete.number : days[days.length - 1]?.number ?? 1;
+}
+
+export function buildHomeSections(state: PortalState): HomeSectionsVM {
+  const all = buildHomeDays(state);
+  const induction = all.filter((d) => d.department == null);
+  // Only departments that actually have days appear (others hidden, §8.1). Order
+  // by the DEPARTMENTS list, so adding days for a new department just works.
+  const departments: HomeDepartmentVM[] = DEPARTMENTS.filter((name) =>
+    all.some((d) => d.department === name),
+  ).map((name) => {
+    const days = all.filter((d) => d.department === name);
+    return { name, days, currentDay: currentOf(days) };
+  });
+  return { induction, inductionCurrentDay: currentOf(induction), departments };
+}
 
 export function buildHomeDays(state: PortalState): HomeDayVM[] {
   return state.days.map((d) => {

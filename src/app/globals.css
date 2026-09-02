@@ -67,6 +67,16 @@ body {
   transition: filter 0.4s ease, opacity 0.4s ease;
 }
 
+/* Short slide-and-fade for a day/department panel opening (§2.8). Conditional
+   rendering handles closing; this only animates the open. */
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.panel-in {
+  animation: panel-in 0.2s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
