@@ -9,6 +9,7 @@ import {
   IconPlayerPlayFilled,
   IconFileText,
   IconClipboardText,
+  IconUsers,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/cn";
 import { DayChip, ItemStateLabel } from "@/components/status-chip";
@@ -31,6 +32,7 @@ function KindIcon({ kind, locked }: { kind: ItemKind; locked: boolean }) {
 function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClick: () => void }) {
   const locked = !day.unlocked;
   const empty = day.modules.length === 0;
+  const isTrack = day.department != null; // Days 4+ — plain card, no image (§6.10)
   return (
     <button
       type="button"
@@ -43,24 +45,34 @@ function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClic
         locked ? "cursor-default" : "hover:border-grey/40",
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-[11px] bg-stage">
-        {day.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={day.image}
-            alt={`Day ${day.number} — ${day.title}`}
-            className={cn("h-full w-full object-cover transition duration-500", locked && "media-locked")}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-grey">
-            photograph coming soon
-          </div>
-        )}
-      </div>
+      {/* Common days (1–3) are photograph-first; track days (4+) are plain (§6.10). */}
+      {!isTrack && (
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-[11px] bg-stage">
+          {day.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={day.image}
+              alt={`Day ${day.number}, ${day.title} — SUNROOOF skylight scene`}
+              className={cn("h-full w-full object-cover transition duration-500", locked && "media-locked")}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-grey">
+              photograph coming soon
+            </div>
+          )}
+        </div>
+      )}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-[family-name:var(--font-mono)] text-xs text-grey">Day {day.number}</div>
+            <div className="flex items-center gap-2">
+              <span className="font-[family-name:var(--font-mono)] text-xs text-grey">Day {day.number}</span>
+              {isTrack && (
+                <span className="rounded-full border border-hairline px-2 py-0.5 text-[10px] text-grey">
+                  {day.department} track
+                </span>
+              )}
+            </div>
             <h3
               className={cn(
                 "mt-1 font-[family-name:var(--font-sora)] text-lg font-semibold",
@@ -217,6 +229,27 @@ export function HomeBoard({
                   onPick={(item) => router.push(`/day/${openDayVM.number}?item=${item.id}`)}
                 />
               ))}
+
+              {/* In-person activities — a distinct, non-clickable row, no play
+                  control, never counted in progress (§5). */}
+              {openDayVM.activities.length > 0 && (
+                <div>
+                  <div className="mb-1 px-2 text-xs font-medium text-grey">In person</div>
+                  <div className="flex flex-col">
+                    {openDayVM.activities.map((a) => (
+                      <div key={a.id} className="flex items-center gap-3 rounded-lg px-2 py-2">
+                        <div className="grid h-10 w-[72px] shrink-0 place-items-center rounded border border-dashed border-hairline bg-paper">
+                          <IconUsers size={16} className="text-grey" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm text-ink">{a.title}</div>
+                          <span className="text-xs text-grey">In-person activity</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.section>
         )}

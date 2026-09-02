@@ -142,13 +142,39 @@ export type Module = {
   items: ModuleItem[];
 };
 
+/** An in-person schedule item (§5) — NOT a portal module. Shown as a distinct,
+ *  non-clickable row; never a video, never counted in progress. */
+export type Activity = { id: string; title: string; note?: string };
+
 export type Day = {
   number: number;
   title: string;
   subtitle: string;
   /** /photos/*.jpg — null means real photograph pending. */
   photo: string | null;
+  /**
+   * Which track this day belongs to. `null` = the common induction (Days 1–3,
+   * everyone). Otherwise a department name (Days 4+). Designed so other
+   * departments' tracks drop in later without a rewrite (§2).
+   */
+  department: string | null;
+  /** In-person activities shown in the day's expansion (§5). */
+  activities?: Activity[];
 };
+
+/** All departments. From Day 4 each has its own track; only Sales is planned yet (§2). */
+export const DEPARTMENTS = [
+  "Pre-Sales",
+  "Sales",
+  "Design",
+  "Marketing",
+  "Factory and Manufacturing",
+  "Finance",
+  "Installation",
+  "HR",
+  "Dispatch",
+  "Tech",
+] as const;
 
 /* ================================================================== */
 /* ASSESSMENT DATA — transcribed verbatim from the HR Word files       */
@@ -658,104 +684,203 @@ export const VISION_ASSESSMENT: Assessment = {
 /* ================================================================== */
 
 export const DAYS: Day[] = [
-  { number: 1, title: "Welcome and vision", subtitle: "Meet SUNROOOF and where we're headed", photo: null },
-  { number: 2, title: "Culture and policy", subtitle: "How we work and what we stand for", photo: null },
-  { number: 3, title: "Product and light", subtitle: "The technology that brings the sky indoors", photo: null },
-  // Day 4 per the onboarding plan (Day 4 — Sales): so far only the two on-site
-  // foundation videos have been received; the rest of the day is not loaded yet.
-  { number: 4, title: "Sales", subtitle: "Applications, site stages and reading layouts", photo: null },
+  // Days 1–3 — common induction (everyone, regardless of department).
+  {
+    number: 1,
+    title: "Welcome and vision",
+    subtitle: "The founder, the workplace and where we're headed",
+    photo: null,
+    department: null,
+    activities: [
+      { id: "d1-act-amphitheatre", title: "Team introduction at the amphitheatre" },
+      { id: "d1-act-forms", title: "Joining forms" },
+    ],
+  },
+  {
+    number: 2,
+    title: "Culture and Magppie",
+    subtitle: "How we work, and the Magppie story",
+    photo: null,
+    department: null,
+  },
+  {
+    number: 3,
+    title: "Wellness lighting and the customer",
+    subtitle: "Why sunlight matters, and the customer journey",
+    photo: null,
+    department: null,
+    activities: [{ id: "d3-act-buddy", title: "Team buddy up and self explore" }],
+  },
+  // Days 4–7 — Sales track (the only department track planned so far, §2).
+  { number: 4, title: "Site and layouts", subtitle: "Understanding sites, reading layouts, applying the product", photo: null, department: "Sales" },
+  { number: 5, title: "Product and funnel", subtitle: "Product training and the sales funnel", photo: null, department: "Sales" },
+  { number: 6, title: "Pitch and tactics", subtitle: "The pitch, need creation and tactics", photo: null, department: "Sales" },
+  { number: 7, title: "Systems and the test", subtitle: "Zoho systems and the mock call test", photo: null, department: "Sales" },
 ];
 
+/* Factory helpers for empty/pending slots (§4a): a slot carries its number and
+   title and NOTHING else — never an invented file, duration, thumbnail or
+   question. Only videos are numbered (§3/§5.8); documents/assessments are not. */
+const pendingVideo = (number: string, id: string, title: string): VideoItem => ({
+  kind: "video", id, number, title, durationSeconds: 0, src: null, youtubeId: null, thumbnail: null,
+});
+const pendingDoc = (id: string, title: string): DocumentItem => ({
+  kind: "document", id, number: "", title, file: null, sizeLabel: null, sections: null,
+});
+const pendingAssessment = (id: string, title: string): AssessmentItem => ({
+  kind: "assessment", id, number: "", title,
+  assessment: { id, title, totalMarks: 0, passMark: null, needsReview: true, sections: [] },
+});
+
 export const MODULES: Module[] = [
-  // ---- Day 1 ----
+  /* ================= Day 1 — Welcome and vision ================= */
   {
-    id: "d1-vision",
-    day: 1,
-    order: 1,
-    title: "Vision",
+    id: "d1m1", day: 1, order: 1, title: "The founder and the vision",
     items: [
-      // Vision video: NOT added — no confirmed YouTube link yet.
-      // Vision document: NOT added — Google Doc PDF not received yet.
-      {
-        kind: "assessment",
-        id: "d1-vision-assessment",
-        number: "1.1",
-        title: "Vision alignment assessment",
-        assessment: VISION_ASSESSMENT,
-      },
-    ],
-  },
-
-  // ---- Day 2 ----
-  {
-    id: "d2-magppie",
-    day: 2,
-    order: 1,
-    title: "Magppie introduction",
-    items: [
-      {
-        kind: "document",
-        id: "d2-wellness-homes-deck",
-        number: "2.1",
-        title: "Wellness Homes by Magppie",
-        file: "/api/document/d2-wellness-homes-deck",
-        sizeLabel: null,
-        sections: null,
-      },
-      // "The Magppie Truth" (9-part article): NOT added — text not received yet.
+      pendingVideo("1.1", "d1-founder-intro", "Founder introduction"),
+      pendingVideo("1.2", "d1-journey", "Journey so far"),
+      pendingVideo("1.3", "d1-vision-video", "Vision video"),
     ],
   },
   {
-    id: "d2-culture-code",
-    day: 2,
-    order: 2,
-    title: "Culture code",
+    id: "d1m2", day: 1, order: 2, title: "The workplace",
     items: [
-      // Culture code session video: NOT received.
-      {
-        kind: "assessment",
-        id: "d2-coc-assessment",
-        number: "2.2",
-        title: "Code of conduct assessment",
-        assessment: CODE_OF_CONDUCT_ASSESSMENT,
-      },
+      pendingVideo("1.4", "d1-ec-tour", "EC tour"),
+      pendingVideo("1.5", "d1-keka", "Keka app walkthrough"),
+    ],
+  },
+  {
+    id: "d1m3", day: 1, order: 3, title: "Documents and assessment",
+    items: [
+      pendingDoc("d1-doc-welcome-kit", "Welcome kit"),
+      pendingDoc("d1-doc-hr-policies", "HR policies"),
+      pendingDoc("d1-doc-attire", "Attire and dress code policy"),
+      pendingDoc("d1-doc-vision", "Vision document"),
+      // LOADED — the vision alignment assessment (HR file, transcribed verbatim).
+      { kind: "assessment", id: "d1-vision-assessment", number: "", title: "Vision alignment assessment", assessment: VISION_ASSESSMENT },
     ],
   },
 
-  // ---- Day 3 ----
-  // No content received. Day 3 has no modules (empty).
-
-  // ---- Day 4 (Sales) ----
-  // Placed per the onboarding plan: Day 4 items 4.2 "Site stages" and 4.3
-  // "Reading architectural layout". Both are practical job-foundation videos,
-  // embedded from YouTube (privacy-friendly nocookie host) — no upload needed.
+  /* ================= Day 2 — Culture and Magppie ================= */
   {
-    id: "d4-onsite",
-    day: 4,
-    order: 1,
-    title: "On-site foundations",
+    id: "d2m1", day: 2, order: 1, title: "Culture and conduct",
     items: [
-      {
-        kind: "video",
-        id: "d4-construction-site",
-        number: "4.1",
-        title: "Understanding a Construction Site",
-        durationSeconds: 0, // YouTube — real duration read at play time
-        src: null,
-        youtubeId: "vkew-1KK3Sc",
-        thumbnail: null,
-      },
-      {
-        kind: "video",
-        id: "d4-architectural-layout",
-        number: "4.2",
-        title: "Reading an Architectural Layout",
-        durationSeconds: 0,
-        src: null,
-        youtubeId: "czrhWbjkjvM",
-        thumbnail: null,
-      },
+      pendingVideo("2.1", "d2-culture-code-video", "Culture code"),
+      pendingVideo("2.2", "d2-hiring-leadership", "Hiring and leadership"),
     ],
+  },
+  {
+    id: "d2m2", day: 2, order: 2, title: "Introduction to Magppie",
+    items: [pendingVideo("2.3", "d2-magppie-intro-video", "Magppie introduction")],
+  },
+  {
+    id: "d2m3", day: 2, order: 3, title: "Documents and assessments",
+    items: [
+      // LOADED — the Wellness Homes deck (compressed PDF, served from private media).
+      { kind: "document", id: "d2-wellness-homes-deck", number: "", title: "Wellness Homes by Magppie", file: "/api/document/d2-wellness-homes-deck", sizeLabel: null, sections: null },
+      pendingDoc("d2-doc-magppie-truth", "The Magppie Truth"),
+      pendingAssessment("d2-articulation-assessment", "Articulation assessment"),
+      // LOADED — the sales code of conduct assessment (HR file, transcribed verbatim).
+      { kind: "assessment", id: "d2-coc-assessment", number: "", title: "Sales code of conduct assessment", assessment: CODE_OF_CONDUCT_ASSESSMENT },
+    ],
+  },
+
+  /* ============ Day 3 — Wellness lighting and the customer ============ */
+  {
+    id: "d3m1", day: 3, order: 1, title: "SUNROOOF as wellness lighting",
+    items: [
+      pendingVideo("3.1", "d3-sunlight", "The importance of sunlight"),
+      pendingVideo("3.2", "d3-circadian", "What circadian lighting is"),
+      pendingVideo("3.3", "d3-artificial-light", "The problems with modern artificial lighting"),
+      pendingVideo("3.4", "d3-wellness-benefits", "Wellness and its benefits"),
+    ],
+  },
+  {
+    id: "d3m2", day: 3, order: 2, title: "Customer and language",
+    items: [
+      pendingVideo("3.5", "d3-customer-journey", "The customer journey"),
+      pendingVideo("3.6", "d3-jargons", "Industry jargons"),
+    ],
+  },
+  {
+    id: "d3m3", day: 3, order: 3, title: "Assessment",
+    items: [pendingAssessment("d3-customer-journey-assessment", "Customer journey assessment")],
+  },
+
+  /* ================= Day 4 — Sales track. Site and layouts ================= */
+  {
+    id: "d4m1", day: 4, order: 1, title: "Understanding the site",
+    items: [
+      // LOADED — construction site video (YouTube, from Shivang) → Day 4 Module 1 (§4.3).
+      { kind: "video", id: "d4-construction-site", number: "4.1", title: "Understanding a Construction Site", durationSeconds: 0, src: null, youtubeId: "vkew-1KK3Sc", thumbnail: null },
+    ],
+  },
+  {
+    id: "d4m2", day: 4, order: 2, title: "Reading architectural layouts",
+    items: [
+      // LOADED — layout video (YouTube, from Shivang) → Day 4 Module 2 (§4.3).
+      { kind: "video", id: "d4-architectural-layout", number: "4.2", title: "Reading an Architectural Layout", durationSeconds: 0, src: null, youtubeId: "czrhWbjkjvM", thumbnail: null },
+      pendingAssessment("d4-layout-assignment", "Layout reading assignment"),
+    ],
+  },
+  {
+    id: "d4m3", day: 4, order: 3, title: "Applying the product",
+    items: [
+      pendingVideo("4.3", "d4-applications", "Applications of SUNROOOF"),
+      pendingVideo("4.4", "d4-use-cases", "Sector-wise use cases"),
+      pendingVideo("4.5", "d4-benefits", "Sector-wise benefits"),
+      pendingVideo("4.6", "d4-pitch-space", "How to pitch according to the space"),
+      pendingVideo("4.7", "d4-case-studies", "Layout case studies"),
+      pendingAssessment("d4-layout-based-assignment", "Layout-based assignment"),
+    ],
+  },
+  {
+    id: "d4m4", day: 4, order: 4, title: "Call training",
+    items: [pendingVideo("4.8", "d4-call-training", "Call pitch and call quality")],
+  },
+
+  /* ================= Day 5 — Sales track. Product and funnel ================= */
+  {
+    id: "d5m1", day: 5, order: 1, title: "Product training",
+    items: [
+      pendingVideo("5.1", "d5-product-training", "Product training"),
+      pendingVideo("5.2", "d5-installation-video", "Installation video"),
+    ],
+  },
+  {
+    id: "d5m2", day: 5, order: 2, title: "Sales funnel training",
+    items: [pendingVideo("5.3", "d5-funnel", "Sales funnel training")],
+  },
+  {
+    id: "d5m3", day: 5, order: 3, title: "Calling qualified leads",
+    items: [pendingVideo("5.4", "d5-qualified-leads", "Calling qualified leads")],
+  },
+
+  /* ================= Day 6 — Sales track. Pitch and tactics ================= */
+  {
+    id: "d6m1", day: 6, order: 1, title: "The EC tour pitch",
+    items: [pendingVideo("6.1", "d6-ec-pitch", "The EC tour pitch")],
+  },
+  {
+    id: "d6m2", day: 6, order: 2, title: "Need creation",
+    items: [pendingVideo("6.2", "d6-need-creation", "Need creation")],
+  },
+  {
+    id: "d6m3", day: 6, order: 3, title: "Sales tactics",
+    items: [
+      pendingVideo("6.3", "d6-negotiation", "Negotiation and FOMO creation"),
+      pendingVideo("6.4", "d6-objection-handling", "FAQs and objection handling"),
+    ],
+  },
+
+  /* ================= Day 7 — Sales track. Systems and the test ================= */
+  {
+    id: "d7m1", day: 7, order: 1, title: "Complete Zoho training",
+    items: [pendingVideo("7.1", "d7-zoho", "Complete Zoho training")],
+  },
+  {
+    id: "d7m2", day: 7, order: 2, title: "Final assessment",
+    items: [pendingAssessment("d7-mock-call-test", "Mock call test")],
   },
 ];
 
@@ -805,12 +930,15 @@ export function videoThumbnail(v: VideoItem): string | null {
   return v.thumbnail ?? (v.youtubeId ? youtubeThumb(v.youtubeId) : null);
 }
 
-/** The day's first available image — first video thumbnail, else none (photos pending). */
+/** The day's cover image — ONLY the day's own photo (data-driven, swaps in
+ *  without code changes). Track days keep a plain card with no image (§6.10). */
 export function dayImage(dayNumber: number): string | null {
-  const day = getDay(dayNumber);
-  if (day?.photo) return day.photo;
-  const firstVideo = itemsForDay(dayNumber).find((i) => i.kind === "video") as VideoItem | undefined;
-  return firstVideo ? videoThumbnail(firstVideo) : null;
+  return getDay(dayNumber)?.photo ?? null;
+}
+
+/** In-person activities for a day (§5). */
+export function activitiesForDay(dayNumber: number): Activity[] {
+  return getDay(dayNumber)?.activities ?? [];
 }
 
 export const DAY_NUMBERS = DAYS.map((d) => d.number).sort((a, b) => a - b);

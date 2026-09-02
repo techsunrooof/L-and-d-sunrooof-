@@ -10,6 +10,7 @@ import {
   modulesForDay,
   dayImage,
   videoThumbnail,
+  activitiesForDay,
   type Assessment,
   type ModuleItem,
   type ItemKind,
@@ -88,16 +89,22 @@ export type HomeItemVM = {
 
 export type HomeModuleVM = { id: string; order: number; title: string; items: HomeItemVM[] };
 
+export type HomeActivityVM = { id: string; title: string; note?: string };
+
 export type HomeDayVM = {
   number: number;
   title: string;
   subtitle: string;
   image: string | null;
+  /** null = common induction; otherwise the department/track name (§2). */
+  department: string | null;
   status: DayStatus;
   unlocked: boolean;
   gatingDone: number;
   gatingTotal: number;
   modules: HomeModuleVM[];
+  /** In-person activities shown as distinct rows (§5). */
+  activities: HomeActivityVM[];
 };
 
 export function buildHomeDays(state: PortalState): HomeDayVM[] {
@@ -109,10 +116,12 @@ export function buildHomeDays(state: PortalState): HomeDayVM[] {
       title: meta?.title ?? `Day ${d.number}`,
       subtitle: meta?.subtitle ?? "",
       image: dayImage(d.number),
+      department: meta?.department ?? null,
       status: d.status,
       unlocked: d.unlocked,
       gatingDone: d.gatingDone,
       gatingTotal: d.gatingTotal,
+      activities: activitiesForDay(d.number).map((a) => ({ id: a.id, title: a.title, note: a.note })),
       modules: mods.map((m) => ({
         id: m.id,
         order: m.order,
