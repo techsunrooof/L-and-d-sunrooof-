@@ -680,6 +680,117 @@ export const VISION_ASSESSMENT: Assessment = {
   ],
 };
 
+/* ---- Dress code policy (Dress_Code_Policy_-SUNROOOF.pptx) ----
+   The deck is entirely text policy (its images are decorative icons), so it is
+   loaded as a readable in-app article — transcribed verbatim, slide by slide. */
+export const DRESS_CODE_SECTIONS: { heading: string; body: string }[] = [
+  {
+    heading: "Our philosophy — why the dress code matters at SUNROOOF",
+    body: `“Our workplace environment should reflect professionalism, mutual respect, and comfort for everyone.”
+
+At SUNROOOF, every interaction is a reflection of who we are — a luxury brand built on precision, care, and comfort. Our dress code isn't about restricting who you are; it's simply an extension of the same elegance and comfort we promise every client, worn by the people who bring it to life.
+
+Why it matters
+•  Builds trust with every client interaction
+•  Reflects your own professionalism and confidence
+•  Protects the reputation you and SUNROOOF share
+
+Culture isn't just what we say — it's what we choose to wear, every single day.`,
+  },
+  {
+    heading: "General principles — for every team member",
+    body: `Professional & presentable — attire should be professional and presentable at all times.
+Neat & modest — dress in a manner that is neat, modest, and appropriate for a professional workplace.
+Well-fitted & ironed — clean, well-fitted attire that's put together.
+Respectful & comfortable — maintains a respectful, comfortable environment for all colleagues.
+
+When in doubt: choose the more professional, understated option. It's easy to remember, and guides judgment gently.`,
+  },
+  {
+    heading: "Guidelines for men — everyday attire & client meetings",
+    body: `Everyday attire
+•  Collared shirts (long or short sleeved), tucked into trousers, linen pants, or chinos
+•  Smart casuals — polo T-shirts with smart jeans (for non-client-dealing members only)
+•  Clean, well-fitted clothing that looks put together
+•  Closed shoes or neat sneakers
+
+Grooming tips
+Neat hair and well-maintained facial hair — attention to detail makes all the difference.
+
+Client meetings (for Sales team & client-facing roles)
+•  Blazers as appropriate
+•  Collared shirts in solid colours or subtle textures (avoid loud prints, big checks, prints), tucked in
+•  Formal trousers, linen pants or well-fitted chinos in neutral tones like navy, charcoal, beige, black
+•  Leather shoes or loafers, well-maintained, with a matching belt
+•  Trimmed hair/beard, minimal accessories`,
+  },
+  {
+    heading: "Guidelines for women — everyday attire & client meetings",
+    body: `Everyday attire
+•  Formal tops, shirts, tunics or formal dresses
+•  Ethnic wear is warmly welcomed — saris, salwar kameez, and similar styles are a beautiful part of our workplace
+
+Client meetings (for Sales team & client-facing roles)
+•  Blazers as appropriate
+•  Formal shirts, kurtas with trousers, or well-fitted formal dresses (longer than knee length), in sober colours
+•  Saree or salwar-kameez as an optional traditional-wear choice, if it fits our brand culture
+•  Closed-toe flats or heels — practical for walking or active sites
+•  Minimal jewellery and makeup, hair neatly tied back
+•  Neat and well-maintained hair, with minimal or no makeup/accessories, as per personal choice and comfortable footwear.`,
+  },
+  {
+    heading: "Grooming standards — presenting yourself with polish",
+    body: `Hair — neat, well-maintained hair, styled appropriately for a professional setting.
+Nails — trimmed, clean nails. If nail polish is worn, keep it neat and chip-free.
+Personal hygiene — maintain good personal hygiene, including managing body odour through daily hygiene and deodorant use.
+Fragrance & breath — keep breath fresh; use mild fragrances and avoid overpowering perfumes or deodorants.
+
+Grooming reflects professionalism: kept simple and gender-neutral, it protects the dignity of our brand and of everyone who represents it.`,
+  },
+  {
+    heading: "Do's and don'ts",
+    body: `Do's
+•  Clean, well-fitted, ironed clothing
+•  Collared shirts, formal tops or professional dresses
+•  Ethnic wear — sarees, salwar kameez, co-ord sets
+•  Business formal for client meetings
+•  Solid colours or subtle patterns
+•  Polished, role-appropriate footwear
+•  Neat hair and well-maintained grooming
+
+Don'ts
+•  Excessively short/cropped clothing, ripped jeans
+•  Garments with deep necklines, off-shoulders
+•  Overly casual, unkempt or wrinkled attire
+•  Polo T-shirts + jeans for client-facing roles
+•  Loud prints, oversized graphics, big visible logos
+•  Bulky, overly casual or distracting footwear
+•  Casual/lounge attire on video calls while working remotely`,
+  },
+  {
+    heading: "Compliance & accountability",
+    body: `This dress code applies to every team member, every working day. Adherence reflects your professionalism and your respect for colleagues and clients — and it upholds the image our guests trust SUNROOOF for.
+
+Failure to adhere to the dress code may result in corrective action — so if you're ever unsure what's appropriate, ask before you dress, not after.
+
+In case of a grey area, discuss with your manager or HR. We'd always rather clarify upfront than correct after the fact.`,
+  },
+  {
+    heading: "Your quick self-check — before you head out",
+    body: `•  Is my outfit clean and fitted?
+•  Is it appropriate for my role today?
+•  Am I representing SUNROOOF confidently?`,
+  },
+  {
+    heading: "Corrective measures",
+    body: `Stage 1 — Verbal feedback: if something doesn't align with our guidelines, HR will offer a quick, private conversation to help you course-correct. It's a simple, respectful heads-up, not a formal mark against you.
+
+Stage 2 — Written feedback: if the same concern comes up again, HR will share written feedback outlining the guideline and next steps. This may include a brief request to go home, change, and return, simply so you can meet clients at your best, never as a penalty.
+
+This process exists to protect the trust our clients place in SUNROOOF, not to penalize anyone. Our goal is always to guide with care, so every team member feels confident representing our brand.`,
+  },
+];
+
 /* ================================================================== */
 /* DAYS, MODULES & ITEMS                                               */
 /* Only received content is present. Missing slots are simply absent.  */
@@ -762,7 +873,8 @@ export const MODULES: Module[] = [
     items: [
       pendingDoc("d1-doc-welcome-kit", "Welcome kit"),
       pendingDoc("d1-doc-hr-policies", "HR policies"),
-      pendingDoc("d1-doc-attire", "Attire and dress code policy"),
+      // LOADED — dress code policy (HR deck, transcribed verbatim as an article).
+      { kind: "document", id: "d1-doc-attire", number: "", title: "Attire and dress code policy", file: null, sizeLabel: null, sections: DRESS_CODE_SECTIONS },
       pendingDoc("d1-doc-vision", "Vision document"),
       // LOADED — the vision alignment assessment (HR file, transcribed verbatim).
       { kind: "assessment", id: "d1-vision-assessment", number: "", title: "Vision alignment assessment", assessment: VISION_ASSESSMENT },
