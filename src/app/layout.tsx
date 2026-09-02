@@ -35,7 +35,9 @@ export default function RootLayout({
       <body>
         {/* Slow, blurred 3D skylight behind everything (§2). */}
         <SceneBackground />
-        <div className="relative flex min-h-screen">
+        {/* Column on phones (the mobile top bar stacks above the content), a
+            row from md up (the sidebar sits beside the content). */}
+        <div className="relative flex min-h-screen flex-col md:flex-row">
           <Sidebar />
           <main className="relative min-w-0 flex-1">{children}</main>
         </div>

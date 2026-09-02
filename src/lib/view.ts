@@ -97,6 +97,8 @@ export type HomeDayVM = {
   title: string;
   subtitle: string;
   image: string | null;
+  /** Alt text describing the scene (§6.16); null when there is no image. */
+  imageAlt: string | null;
   /** null = common induction; otherwise the department/track name (§2). */
   department: string | null;
   status: DayStatus;
@@ -146,6 +148,7 @@ export function buildHomeDays(state: PortalState): HomeDayVM[] {
       title: meta?.title ?? `Day ${d.number}`,
       subtitle: meta?.subtitle ?? "",
       image: dayImage(d.number),
+      imageAlt: meta?.photoAlt ?? null,
       department: meta?.department ?? null,
       status: d.status,
       unlocked: d.unlocked,

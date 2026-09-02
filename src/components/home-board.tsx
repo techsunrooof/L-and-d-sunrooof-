@@ -51,7 +51,7 @@ function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClic
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={day.image}
-              alt={`Day ${day.number}, ${day.title} — SUNROOOF skylight scene`}
+              alt={day.imageAlt ?? `Day ${day.number}, ${day.title}`}
               className={cn("h-full w-full object-cover transition duration-500", locked && "media-locked")}
             />
           ) : (

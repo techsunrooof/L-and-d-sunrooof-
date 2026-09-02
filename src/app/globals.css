@@ -77,6 +77,20 @@ body {
   animation: panel-in 0.2s ease-out;
 }
 
+/* The sunroof background panel drifting slowly (§6.1) — a ~36s loop that pans
+   and tilts the skylight image a little so it reads as a moving panel seen from
+   below. It is heavily blurred, so only the large motion is perceptible. Under
+   reduced motion the image simply holds still (§6.3). */
+@keyframes bg-drift {
+  0%   { transform: scale(1.18) translate3d(-1.5%, -1%, 0) rotate(-1.2deg); }
+  50%  { transform: scale(1.24) translate3d(1.5%, 1%, 0) rotate(1.2deg); }
+  100% { transform: scale(1.18) translate3d(-1.5%, -1%, 0) rotate(-1.2deg); }
+}
+.bg-drift {
+  animation: bg-drift 36s ease-in-out infinite;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -84,5 +98,10 @@ body {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+  /* Hold the panel still but keep it framed (no edge reveal). */
+  .bg-drift {
+    animation: none !important;
+    transform: scale(1.18);
   }
 }

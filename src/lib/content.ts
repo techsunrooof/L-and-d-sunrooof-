@@ -152,6 +152,8 @@ export type Day = {
   subtitle: string;
   /** /photos/*.jpg — null means real photograph pending. */
   photo: string | null;
+  /** Alt text describing the actual scene (§6.16) — not the filename. */
+  photoAlt?: string;
   /**
    * Which track this day belongs to. `null` = the common induction (Days 1–3,
    * everyone). Otherwise a department name (Days 4+). Designed so other
@@ -689,7 +691,9 @@ export const DAYS: Day[] = [
     number: 1,
     title: "Welcome and vision",
     subtitle: "The founder, the workplace and where we're headed",
-    photo: null,
+    photo: "/photos/day-1.jpg",
+    photoAlt:
+      "The SUNROOOF Experience Centre — a long marble island beneath a glass skylight roof, hung with trailing green plants.",
     department: null,
     activities: [
       { id: "d1-act-amphitheatre", title: "Team introduction at the amphitheatre" },
@@ -700,14 +704,18 @@ export const DAYS: Day[] = [
     number: 2,
     title: "Culture and Magppie",
     subtitle: "How we work, and the Magppie story",
-    photo: null,
+    photo: "/photos/day-2.jpg",
+    photoAlt:
+      "A bright SUNROOOF experience space lit by overhead skylight panels — a central planter, the Sun Café and the company story wall.",
     department: null,
   },
   {
     number: 3,
     title: "Wellness lighting and the customer",
     subtitle: "Why sunlight matters, and the customer journey",
-    photo: null,
+    photo: "/photos/day-3.jpg",
+    photoAlt:
+      "A visitor gazing up in wonder at the daylight from a SUNROOOF skylight, a trailing green plant beside her.",
     department: null,
     activities: [{ id: "d3-act-buddy", title: "Team buddy up and self explore" }],
   },
