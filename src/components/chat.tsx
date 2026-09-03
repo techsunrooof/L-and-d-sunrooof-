@@ -16,6 +16,13 @@ type Msg = { id: string; role: "user" | "assistant"; content: string };
 const uid = () =>
   typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : String(Math.random());
 
+// In-app voice (mic in + speak-aloud out) needs OpenRouter audio credits. Until
+// those are added it would only error, so it's switched off here — users dictate
+// into the text box with their own dictation app instead. Flip to true (and add
+// OpenRouter credit) to switch the mic + Listen buttons back on. The routes and
+// src/lib/voice.ts stay in place, ready.
+const VOICE_ENABLED = false;
+
 export function Chat({
   starters = [],
   knowledgeLoaded = false,
@@ -254,7 +261,7 @@ export function Chat({
                   >
                     {m.content}
                   </div>
-                  {m.role === "assistant" && m.content && (
+                  {VOICE_ENABLED && m.role === "assistant" && m.content && (
                     <button
                       type="button"
                       onClick={() => speak(m)}
@@ -291,25 +298,27 @@ export function Chat({
 
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex items-end gap-2 rounded-2xl border border-hairline bg-paper p-2">
-          {/* press-to-talk mic */}
-          <button
-            type="button"
-            onClick={recording ? stopRecording : startRecording}
-            disabled={busy || transcribing}
-            aria-label={recording ? "Stop recording" : "Ask by voice"}
-            className={cn(
-              "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition disabled:opacity-30",
-              recording ? "animate-pulse border-sun bg-sun text-ink" : "border-hairline text-grey hover:text-ink",
-            )}
-          >
-            {transcribing ? (
-              <IconLoader2 size={18} className="animate-spin" />
-            ) : recording ? (
-              <IconPlayerStopFilled size={16} />
-            ) : (
-              <IconMicrophone size={18} stroke={1.75} />
-            )}
-          </button>
+          {/* press-to-talk mic — hidden until in-app voice is switched on (VOICE_ENABLED) */}
+          {VOICE_ENABLED && (
+            <button
+              type="button"
+              onClick={recording ? stopRecording : startRecording}
+              disabled={busy || transcribing}
+              aria-label={recording ? "Stop recording" : "Ask by voice"}
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition disabled:opacity-30",
+                recording ? "animate-pulse border-sun bg-sun text-ink" : "border-hairline text-grey hover:text-ink",
+              )}
+            >
+              {transcribing ? (
+                <IconLoader2 size={18} className="animate-spin" />
+              ) : recording ? (
+                <IconPlayerStopFilled size={16} />
+              ) : (
+                <IconMicrophone size={18} stroke={1.75} />
+              )}
+            </button>
+          )}
 
           <textarea
             value={input}
