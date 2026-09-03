@@ -21,6 +21,12 @@ function abs(rel: string): boolean {
   return existsSync(path.join(process.cwd(), clean));
 }
 
+/** Thumbnails/posters are public assets — served from public/, so resolve there. */
+function absPublic(rel: string): boolean {
+  const clean = rel.startsWith("/") ? rel.slice(1) : rel;
+  return existsSync(path.join(process.cwd(), "public", clean));
+}
+
 export type VideoCoverage = {
   kind: "video";
   id: string;
@@ -154,7 +160,7 @@ export function buildCoverage(): CoverageReport {
           const source: VideoCoverage["source"] = item.youtubeId ? "youtube" : item.src ? "mp4" : "none";
           const fileResolves =
             source === "mp4" ? abs(`media/videos/${item.id}.mp4`) : source === "none" ? false : null;
-          const hasThumbnail = !!item.thumbnail && abs(item.thumbnail);
+          const hasThumbnail = !!item.thumbnail && absPublic(item.thumbnail);
           const durationRecorded = item.durationSeconds > 0;
           const playable = source === "youtube" || fileResolves === true;
           if (playable) videoWithFiles += 1;

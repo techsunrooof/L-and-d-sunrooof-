@@ -5,11 +5,15 @@ import { getItem } from "@/lib/content";
 import { getLearnerId } from "@/lib/learner";
 import { getState } from "@/lib/state";
 import { isAccessible } from "@/lib/locking";
+import { signedVideoUrl, videoStorageConfigured } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* Streams a video item's bytes ONLY if the learner has it unlocked (§6.6). */
+/* Streams a video item's bytes ONLY if the learner has it unlocked (§6.6).
+   Local mp4 under media/videos wins (dev); otherwise the bytes live in the
+   private Supabase bucket and we hand back a short-lived signed URL. The lock
+   check above the fork gates both paths. */
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
 
@@ -26,6 +30,16 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   try {
     buf = await readFile(file);
   } catch {
+    // No local file — fall back to the private bucket (this is the deploy path).
+    if (videoStorageConfigured()) {
+      const url = await signedVideoUrl(id);
+      if (url) {
+        return new Response(null, {
+          status: 307,
+          headers: { Location: url, "Cache-Control": "private, no-store" },
+        });
+      }
+    }
     return new Response("Video file not available yet.", { status: 404 });
   }
 

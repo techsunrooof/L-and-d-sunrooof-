@@ -858,7 +858,10 @@ export const MODULES: Module[] = [
     items: [
       pendingVideo("1.1", "d1-founder-intro", "Founder introduction"),
       pendingVideo("1.2", "d1-journey", "Journey so far"),
-      pendingVideo("1.3", "d1-vision-video", "Vision video"),
+      // LOADED — the vision session video. Playing via YouTube so it works on the
+      // live site now; self-host (src: "/api/video/d1-vision-video") is ready to
+      // switch back to once the private Supabase bucket is wired on the deploy.
+      { kind: "video", id: "d1-vision-video", number: "1.3", title: "Vision video", durationSeconds: 4231, src: null, youtubeId: "gT352vs05Uw", thumbnail: "/photos/poster-d1-vision-video.jpg" },
     ],
   },
   {
@@ -885,7 +888,10 @@ export const MODULES: Module[] = [
   {
     id: "d2m1", day: 2, order: 1, title: "Culture and conduct",
     items: [
-      pendingVideo("2.1", "d2-culture-code-video", "Culture code"),
+      // LOADED — the sales code of conduct video (via YouTube for the live site;
+      // self-host ready as above). Titled to match the video Jiya sent; it pairs
+      // with the Day 2 sales code of conduct assessment.
+      { kind: "video", id: "d2-culture-code-video", number: "2.1", title: "Sales code of conduct", durationSeconds: 2480, src: null, youtubeId: "7m42SQNy8ko", thumbnail: "/photos/poster-d2-culture-code-video.jpg" },
       pendingVideo("2.2", "d2-hiring-leadership", "Hiring and leadership"),
     ],
   },
