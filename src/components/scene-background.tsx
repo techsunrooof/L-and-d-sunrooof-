@@ -18,7 +18,7 @@ const SWITCH_MS = 2500;
 
 function intensityFor(pathname: string): number {
   if (pathname.startsWith("/day")) return 0.3; // day / video pages: fainter
-  if (pathname === "/") return 0.9; // home: skylight clearly present
+  if (pathname === "/") return 0.82; // home: skylight clearly present
   return 0.5;
 }
 
@@ -76,8 +76,14 @@ export function SceneBackground() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(255,251,244,0.2) 0%, rgba(255,253,249,0.4) 50%, rgba(255,255,255,0.66) 100%)",
+            "linear-gradient(180deg, rgba(255,252,246,0.3) 0%, rgba(255,254,250,0.5) 50%, rgba(255,255,255,0.74) 100%)",
         }}
+      />
+      {/* extra light scrim across the top so the heading always reads over the
+          bright skylight, fading out so the skylight stays visible below */}
+      <div
+        className="absolute inset-x-0 top-0 h-[42%]"
+        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0) 100%)" }}
       />
     </div>
   );
