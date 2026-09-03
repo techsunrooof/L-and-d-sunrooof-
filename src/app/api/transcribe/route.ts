@@ -1,45 +1,19 @@
 import { NextRequest } from "next/server";
-import { spawn } from "node:child_process";
-import { writeFile, readFile, unlink } from "node:fs/promises";
-import path from "node:path";
-import os from "node:os";
-import { randomUUID } from "node:crypto";
-import ffmpegPath from "ffmpeg-static";
-import { transcribeAudio } from "@/lib/voice";
+import { transcribeAudio, transcriptionConfigured } from "@/lib/voice";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /*
-  Press-to-talk speech → text (§ Voice). The browser records webm/ogg (Opus); the
-  audio model wants mp3, so we transcode with ffmpeg here, then transcribe. The
-  recording is NOT stored — the temp files are deleted straight after.
+  Press-to-talk speech → text (§ Voice). The browser's recording is uploaded to
+  Groq's Whisper as a real multipart file — no transcode, no base64. The
+  recording is NOT stored. On any failure we tell the user to type instead, and
+  we never forward an empty question to the assistant.
 */
-
-async function toMp3(input: Buffer): Promise<Buffer> {
-  if (!ffmpegPath) throw new Error("ffmpeg-not-available");
-  const inFile = path.join(os.tmpdir(), `stt-${randomUUID()}`);
-  const outFile = path.join(os.tmpdir(), `stt-${randomUUID()}.mp3`);
-  await writeFile(inFile, input);
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const ff = spawn(ffmpegPath as string, ["-y", "-i", inFile, "-ac", "1", "-ar", "16000", "-f", "mp3", outFile]);
-      let err = "";
-      ff.stderr.on("data", (d) => (err += d.toString()));
-      ff.on("error", reject);
-      ff.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg ${code}: ${err.slice(-200)}`))));
-    });
-    return await readFile(outFile);
-  } finally {
-    void unlink(inFile).catch(() => {});
-    void unlink(outFile).catch(() => {});
-  }
-}
-
 export async function POST(req: NextRequest) {
-  if (!process.env.OPENROUTER_API_KEY) {
+  if (!transcriptionConfigured()) {
     return Response.json(
-      { error: "not-configured", message: "Voice isn't switched on yet — an API key is needed on the server." },
+      { error: "not-configured", message: "Voice isn't available right now — please type your question instead." },
       { status: 503 },
     );
   }
@@ -50,29 +24,26 @@ export async function POST(req: NextRequest) {
     const f = form.get("audio");
     if (f instanceof File) file = f;
   } catch {
-    return Response.json({ error: "bad-input", message: "That recording couldn't be read." }, { status: 400 });
+    return Response.json({ error: "bad-input", message: "That recording couldn't be read. Please type instead." }, { status: 400 });
   }
 
-  if (!file || file.size === 0) {
+  if (!file) {
+    return Response.json({ error: "bad-input", message: "No recording was received. Please type instead." }, { status: 400 });
+  }
+
+  // Diagnostics: what actually arrived.
+  console.log(`[transcribe] received ${file.size} bytes, type="${file.type}", name="${file.name}"`);
+
+  // A near-empty blob means the mic captured nothing (an accidental tap).
+  if (file.size < 1500) {
     return Response.json(
-      { error: "empty", message: "The recording was empty. Press the mic, speak, then press stop." },
+      { error: "empty", message: "That recording was too short. Hold the mic, speak, then stop." },
       { status: 400 },
     );
   }
 
-  let mp3: Buffer;
   try {
-    mp3 = await toMp3(Buffer.from(await file.arrayBuffer()));
-  } catch (err) {
-    console.error("[assistant] audio transcode failed", err);
-    return Response.json(
-      { error: "transcode", message: "Couldn't read that recording. Please try again." },
-      { status: 502 },
-    );
-  }
-
-  try {
-    const text = await transcribeAudio(mp3);
+    const text = await transcribeAudio(file);
     if (!text) {
       return Response.json(
         { error: "no-speech", message: "I couldn't make out any speech there. Please try again." },
@@ -80,10 +51,17 @@ export async function POST(req: NextRequest) {
       );
     }
     return Response.json({ text });
-  } catch (err) {
-    console.error("[assistant] transcribe error", err);
+  } catch (err: unknown) {
+    const status = (err as { status?: number })?.status;
+    console.error(`[transcribe] Groq error (status ${status ?? "?"}):`, err);
+    if (status === 429) {
+      return Response.json(
+        { error: "rate-limit", message: "Voice is busy right now — please type your question instead." },
+        { status: 429 },
+      );
+    }
     return Response.json(
-      { error: "upstream", message: "Couldn't transcribe that just now. Please try again, or type instead." },
+      { error: "upstream", message: "Voice isn't available right now — please type your question instead." },
       { status: 502 },
     );
   }
