@@ -17,9 +17,9 @@ const CLIPS = ["/brand/hero.mp4", "/brand/hero-2.mp4"];
 const SWITCH_MS = 2500;
 
 function intensityFor(pathname: string): number {
-  if (pathname.startsWith("/day")) return 0.24; // day / video pages: fainter
-  if (pathname === "/") return 0.82; // home: skylight clearly present
-  return 0.42;
+  if (pathname.startsWith("/day")) return 0.3; // day / video pages: fainter
+  if (pathname === "/") return 1; // home: skylight fully present
+  return 0.5;
 }
 
 export function SceneBackground() {
@@ -52,7 +52,7 @@ export function SceneBackground() {
             src="/brand/hero-poster.jpg"
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
-            style={{ filter: "blur(2px) saturate(1.03)" }}
+            style={{ filter: "blur(1.5px) saturate(1.05)" }}
           />
         ) : (
           CLIPS.map((src, i) => (
@@ -65,7 +65,7 @@ export function SceneBackground() {
               loop
               playsInline
               className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out"
-              style={{ opacity: i === active ? 1 : 0, filter: "blur(2px) saturate(1.03)" }}
+              style={{ opacity: i === active ? 1 : 0, filter: "blur(1.5px) saturate(1.05)" }}
             />
           ))
         )}
@@ -76,7 +76,7 @@ export function SceneBackground() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(255,250,242,0.14) 0%, rgba(255,252,247,0.34) 50%, rgba(255,255,255,0.68) 100%)",
+            "linear-gradient(180deg, rgba(255,250,242,0.04) 0%, rgba(255,252,247,0.18) 50%, rgba(255,255,255,0.5) 100%)",
         }}
       />
     </div>
