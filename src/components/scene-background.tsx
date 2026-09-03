@@ -14,12 +14,12 @@ import { usePathname } from "next/navigation";
 */
 
 const CLIPS = ["/brand/hero.mp4", "/brand/hero-2.mp4"];
-const SWITCH_MS = 5000;
+const SWITCH_MS = 2500;
 
 function intensityFor(pathname: string): number {
-  if (pathname.startsWith("/day")) return 0.18; // day / video pages: much fainter
-  if (pathname === "/") return 0.6; // home: the skylight is clearly there
-  return 0.32;
+  if (pathname.startsWith("/day")) return 0.24; // day / video pages: fainter
+  if (pathname === "/") return 0.82; // home: skylight clearly present
+  return 0.42;
 }
 
 export function SceneBackground() {
@@ -64,7 +64,7 @@ export function SceneBackground() {
               muted
               loop
               playsInline
-              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out"
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out"
               style={{ opacity: i === active ? 1 : 0, filter: "blur(2px) saturate(1.03)" }}
             />
           ))
@@ -76,7 +76,7 @@ export function SceneBackground() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(255,250,242,0.34) 0%, rgba(255,252,247,0.55) 50%, rgba(255,255,255,0.82) 100%)",
+            "linear-gradient(180deg, rgba(255,250,242,0.14) 0%, rgba(255,252,247,0.34) 50%, rgba(255,255,255,0.68) 100%)",
         }}
       />
     </div>
