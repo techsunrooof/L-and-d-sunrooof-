@@ -29,15 +29,17 @@ function KindIcon({ kind, locked }: { kind: ItemKind; locked: boolean }) {
   return <IconClipboardText size={16} className={cls} />; // assessment
 }
 
-/* Warm brown accent per induction day — all brown, in gently stepping tones so
-   the three cards still read as distinct. */
-const DAY_ACCENT: Record<number, string> = { 1: "#6f4718", 2: "#835a28", 3: "#9a7038" };
+/* The induction day cards (Day 1–3) are deep-brown boxes with cream text and a
+   warm gold accent — set against the beige, moving skylight behind. */
+const CARD_BROWN = "#38240f";
+const CARD_CREAM = "#f2e7d3";
+const CARD_GOLD = "#dcae6e";
 
 /* ---- a day card (the toggle) ---- */
 function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClick: () => void }) {
   const locked = !day.unlocked;
   const isTrack = day.department != null; // department days are plain, no cover image (§6.10)
-  const accent = !isTrack && !locked ? DAY_ACCENT[day.number] : undefined;
+  const brown = !isTrack && !locked; // induction day cards are deep-brown boxes
   return (
     <button
       type="button"
@@ -47,8 +49,9 @@ function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClic
       className={cn(
         "card block overflow-hidden text-left transition",
         open ? "border-sun" : "border-hairline",
-        locked ? "cursor-default" : "hover:border-grey/40",
+        locked ? "cursor-default" : brown ? "hover:brightness-110" : "hover:border-grey/40",
       )}
+      style={brown ? { backgroundColor: CARD_BROWN, borderColor: open ? "#f0a500" : "#5a3d20" } : undefined}
     >
       {!isTrack && (
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-[11px] bg-stage">
@@ -66,33 +69,37 @@ function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClic
           )}
         </div>
       )}
-      {accent && <div className="h-1.5 w-full" style={{ backgroundColor: accent }} />}
+      {brown && <div className="h-1 w-full" style={{ backgroundColor: CARD_GOLD }} />}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div
-              className={cn("font-[family-name:var(--font-mono)] text-xs", accent ? "font-semibold" : "text-grey")}
-              style={accent ? { color: accent } : undefined}
+              className={cn("font-[family-name:var(--font-mono)] text-xs", brown ? "font-semibold" : "text-grey")}
+              style={brown ? { color: CARD_GOLD } : undefined}
             >
               Day {day.number}
             </div>
             <h3
               className={cn(
                 "mt-1 font-[family-name:var(--font-sora)] text-lg font-semibold",
-                locked ? "text-grey" : "text-ink",
+                locked ? "text-grey" : brown ? "" : "text-ink",
               )}
+              style={brown ? { color: CARD_CREAM } : undefined}
             >
               {day.title}
             </h3>
           </div>
-          <DayChip status={day.status} />
+          <DayChip status={day.status} onDark={brown} />
         </div>
         <div className="mt-1.5 flex items-end justify-between gap-2">
-          <p className="text-sm text-grey">{day.subtitle}</p>
+          <p className={cn("text-sm", brown ? "" : "text-grey")} style={brown ? { color: "rgba(242,231,211,0.72)" } : undefined}>
+            {day.subtitle}
+          </p>
           {!locked && (
             <IconChevronDown
               size={18}
-              className={cn("shrink-0 text-grey transition-transform duration-300", open && "rotate-180 text-sun")}
+              className={cn("shrink-0 transition-transform duration-300", open ? "rotate-180 text-sun" : brown ? "" : "text-grey")}
+              style={brown && !open ? { color: "#e6d8c0" } : undefined}
             />
           )}
         </div>

@@ -9,7 +9,11 @@ import type { ItemKind } from "@/lib/content";
   with a padlock. No red anywhere (§4.5).
 */
 
-export function DayChip({ status }: { status: DayStatus }) {
+export function DayChip({ status, onDark }: { status: DayStatus; onDark?: boolean }) {
+  // On a dark (brown) card, the outline chips flip to cream so they stay legible.
+  const outline = onDark
+    ? "border border-white/35 text-[#f0e5d2]"
+    : "border border-hairline text-grey";
   switch (status) {
     case "in-progress":
       return (
@@ -19,21 +23,26 @@ export function DayChip({ status }: { status: DayStatus }) {
       );
     case "complete":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-hairline px-2.5 py-1 text-xs font-medium text-success">
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium",
+            onDark ? "border border-white/35 text-[#bfe6cd]" : "border border-hairline text-success",
+          )}
+        >
           <IconCheck size={13} stroke={2.5} />
           Complete
         </span>
       );
     case "locked":
       return (
-        <span className="inline-flex items-center gap-1 rounded-full border border-hairline px-2.5 py-1 text-xs font-medium text-grey">
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium", outline)}>
           <IconLock size={12} stroke={2} />
           Locked
         </span>
       );
     default:
       return (
-        <span className="inline-flex items-center rounded-full border border-hairline px-2.5 py-1 text-xs font-medium text-grey">
+        <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium", outline)}>
           Not started
         </span>
       );

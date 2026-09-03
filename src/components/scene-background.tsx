@@ -76,7 +76,7 @@ export function SceneBackground() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(255,252,246,0.3) 0%, rgba(255,254,250,0.5) 50%, rgba(255,255,255,0.74) 100%)",
+            "linear-gradient(180deg, rgba(244,234,217,0.4) 0%, rgba(246,237,222,0.52) 50%, rgba(249,243,233,0.72) 100%)",
         }}
       />
       {/* extra light scrim across the top so the heading always reads over the
