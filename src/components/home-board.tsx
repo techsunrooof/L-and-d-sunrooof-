@@ -29,9 +29,9 @@ function KindIcon({ kind, locked }: { kind: ItemKind; locked: boolean }) {
   return <IconClipboardText size={16} className={cls} />; // assessment
 }
 
-/* A soft accent colour per induction day (§ colourful cards) — warm, on-brand,
-   and tied to the content: amber, terracotta, and sage-green for the wellness day. */
-const DAY_ACCENT: Record<number, string> = { 1: "#e0912a", 2: "#c4693a", 3: "#5f9158" };
+/* Warm brown accent per induction day — all brown, in gently stepping tones so
+   the three cards still read as distinct. */
+const DAY_ACCENT: Record<number, string> = { 1: "#6f4718", 2: "#835a28", 3: "#9a7038" };
 
 /* ---- a day card (the toggle) ---- */
 function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClick: () => void }) {

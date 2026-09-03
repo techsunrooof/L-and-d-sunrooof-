@@ -15,7 +15,7 @@ export default async function HomePage() {
       <header className="max-w-2xl">
         <h1
           className="font-[family-name:var(--font-sora)] text-3xl font-bold tracking-tight md:text-[2.6rem] md:leading-[1.1]"
-          style={{ color: "#6a4522", textShadow: "0 1px 10px rgba(255,255,255,0.7)" }}
+          style={{ color: "#7a4712", textShadow: "0 1px 10px rgba(255,255,255,0.75)" }}
         >
           Your onboarding
         </h1>
