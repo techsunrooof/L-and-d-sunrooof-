@@ -29,10 +29,15 @@ function KindIcon({ kind, locked }: { kind: ItemKind; locked: boolean }) {
   return <IconClipboardText size={16} className={cls} />; // assessment
 }
 
+/* A soft accent colour per induction day (§ colourful cards) — warm, on-brand,
+   and tied to the content: amber, terracotta, and sage-green for the wellness day. */
+const DAY_ACCENT: Record<number, string> = { 1: "#e0912a", 2: "#c4693a", 3: "#5f9158" };
+
 /* ---- a day card (the toggle) ---- */
 function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClick: () => void }) {
   const locked = !day.unlocked;
   const isTrack = day.department != null; // department days are plain, no cover image (§6.10)
+  const accent = !isTrack && !locked ? DAY_ACCENT[day.number] : undefined;
   return (
     <button
       type="button"
@@ -61,10 +66,16 @@ function DayCard({ day, open, onClick }: { day: HomeDayVM; open: boolean; onClic
           )}
         </div>
       )}
+      {accent && <div className="h-1.5 w-full" style={{ backgroundColor: accent }} />}
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-[family-name:var(--font-mono)] text-xs text-grey">Day {day.number}</div>
+            <div
+              className={cn("font-[family-name:var(--font-mono)] text-xs", accent ? "font-semibold" : "text-grey")}
+              style={accent ? { color: accent } : undefined}
+            >
+              Day {day.number}
+            </div>
             <h3
               className={cn(
                 "mt-1 font-[family-name:var(--font-sora)] text-lg font-semibold",
