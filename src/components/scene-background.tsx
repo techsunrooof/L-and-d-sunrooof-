@@ -3,23 +3,19 @@
 import { usePathname } from "next/navigation";
 
 /*
-  The sunroof background (build spec §6). The real "future light" photograph —
-  a skylight seen from below at a slight angle — drifts and tilts slowly on a
-  ~36s loop, heavily blurred so it is only ever atmosphere (§6.4). A warm wash
-  over it keeps the interface light-orange and the black type readable.
+  The 3D SUNROOOF skylight behind the content (§6). A glass grid with warm
+  mullions, seen from below at an angle (CSS perspective), with a soft sun glow —
+  slowly drifting on a ~38s loop so it reads as a moving 3D skylight panel.
+  Pure CSS: no WebGL, works everywhere, freezes under reduced motion.
 
-  • Moving panel                       → CSS `bg-drift` keyframe on the image.
-  • Still fallback / reduced motion    → the same <img>; the keyframe is disabled
-    under prefers-reduced-motion, so the picture simply holds (§6.2, §6.3).
-  • No WebGL                           → works on low-powered devices (§6.2).
-  • Prominent on home, faint on days   → opacity keyed off the route (§6.1).
+  • Prominent on home, faint on day/video pages → opacity keyed off the route.
+  • Never competes with the cards/type → soft blur + a warm-to-white wash on top.
 */
 
-/** Route → how visible the background is (§6.1). */
 function intensityFor(pathname: string): number {
-  if (pathname.startsWith("/day")) return 0.2; // day / video pages: much fainter
-  if (pathname === "/") return 0.68; // home: clearly present, never competing
-  return 0.42;
+  if (pathname.startsWith("/day")) return 0.18; // day / video pages: much fainter
+  if (pathname === "/") return 0.62; // home: clearly a skylight overhead
+  return 0.34;
 }
 
 export function SceneBackground() {
@@ -28,26 +24,48 @@ export function SceneBackground() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* The drifting skylight photograph. */}
+      {/* warm sky ground */}
       <div
         className="absolute inset-0"
-        style={{ opacity, transition: "opacity 600ms ease" }}
+        style={{ background: "linear-gradient(180deg, #fdecd4 0%, #fbf2e4 45%, #ffffff 100%)" }}
+      />
+
+      {/* the drifting 3D skylight panel */}
+      <div
+        className="absolute inset-0"
+        style={{ perspective: "1100px", opacity, transition: "opacity 600ms ease" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/brand/future-light.jpg"
-          alt=""
-          className="bg-drift absolute inset-0 h-full w-full object-cover"
-          style={{ filter: "blur(26px) saturate(1.05)" }}
+        <div
+          className="skylight-drift absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{
+            width: "175vmax",
+            height: "175vmax",
+            filter: "blur(2.5px)",
+            backgroundColor: "#f5e3c1",
+            backgroundImage: [
+              // glass sheen across the panel
+              "linear-gradient(120deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.05) 42%, rgba(255,255,255,0.4) 100%)",
+              // vertical mullions
+              "repeating-linear-gradient(90deg, rgba(120,84,44,0) 0 104px, rgba(120,84,44,0.5) 104px 116px)",
+              // horizontal mullions
+              "repeating-linear-gradient(0deg, rgba(120,84,44,0) 0 104px, rgba(120,84,44,0.5) 104px 116px)",
+            ].join(","),
+          }}
         />
       </div>
-      {/* Warm-to-white wash: keeps it in the SUNROOOF palette and stops the
-          photograph from ever competing with the cards or the type (§6.4, §6.7). */}
+
+      {/* warm sun glow, upper area — the SUNROOOF bloom */}
+      <div
+        className="absolute inset-0"
+        style={{ background: "radial-gradient(62% 52% at 66% 18%, rgba(255,205,110,0.5) 0%, rgba(255,205,110,0) 70%)" }}
+      />
+
+      {/* readability wash: keeps it atmospheric and the black type legible */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(255,246,232,0.32) 0%, rgba(255,250,243,0.55) 55%, rgba(255,255,255,0.82) 100%)",
+            "linear-gradient(180deg, rgba(255,250,242,0.26) 0%, rgba(255,252,247,0.5) 55%, rgba(255,255,255,0.8) 100%)",
         }}
       />
     </div>
