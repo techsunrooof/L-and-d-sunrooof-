@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { IconCheck, IconCalendarStar } from "@tabler/icons-react";
 import { cn } from "@/lib/cn";
 import { HolidayList } from "@/components/holiday-list";
@@ -15,7 +16,8 @@ import { HolidayList } from "@/components/holiday-list";
   items are day THEMES that don't map 1:1 to the loaded modules (see report).
 */
 
-type Item = { id: string; label: string };
+/** `href` links an item to the real thing in the portal (e.g. the policy video). */
+type Item = { id: string; label: string; href?: string };
 type Day = {
   key: string;
   badge: string;
@@ -38,7 +40,8 @@ const DAYS: Day[] = [
       { id: "d1-1", label: "Welcome kit and welcome video" },
       { id: "d1-2", label: "Experience Centre tour" },
       { id: "d1-3", label: "Vision video, founder intro and journey so far" },
-      { id: "d1-4", label: "HR policies and attire policy" },
+      // Links to the company-policy video so a new joiner reaches it in induction.
+      { id: "d1-4", label: "HR policies and attire policy", href: "/day/1?item=d1-company-policy" },
       { id: "d1-5", label: "Team introduction and joining forms" },
     ],
   },
@@ -282,12 +285,12 @@ export function OnboardingChecklist() {
                     {day.items.map((item) => {
                       const checked = done.has(item.id);
                       return (
-                        <li key={item.id}>
+                        <li key={item.id} className="flex items-start gap-1">
                           <button
                             type="button"
                             onClick={() => toggle(item.id)}
                             aria-pressed={checked}
-                            className="flex w-full items-start gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/40"
+                            className="flex flex-1 items-start gap-3 rounded-lg px-2 py-2 text-left transition hover:bg-white/40"
                           >
                             <span
                               className={cn(
@@ -305,6 +308,15 @@ export function OnboardingChecklist() {
                               {item.label}
                             </span>
                           </button>
+                          {item.href && (
+                            <Link
+                              href={item.href}
+                              className="mt-2 shrink-0 rounded-md px-2 py-1 text-xs font-semibold transition hover:underline"
+                              style={{ color: day.badgeText }}
+                            >
+                              Watch
+                            </Link>
+                          )}
                         </li>
                       );
                     })}

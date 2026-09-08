@@ -883,6 +883,18 @@ export const MODULES: Module[] = [
       { kind: "assessment", id: "d1-vision-assessment", number: "", title: "Vision alignment assessment", assessment: VISION_ASSESSMENT },
     ],
   },
+  {
+    id: "d1m4", day: 1, order: 4, title: "Company policy",
+    items: [
+      // SLOT — SUNROOOF's own company-policy video (the team is supplying a
+      // compressed file; NOT a YouTube link). When it arrives: put it at
+      // media/videos/d1-company-policy.mp4 (dev) and in the private Supabase
+      // bucket (live), then set src: "/api/video/d1-company-policy" + the real
+      // durationSeconds. Plays through the existing player and counts toward
+      // progress like every other video. Pending the file.
+      pendingVideo("1.6", "d1-company-policy", "Company policy"),
+    ],
+  },
 
   /* ================= Day 2 — Culture and Magppie ================= */
   {
