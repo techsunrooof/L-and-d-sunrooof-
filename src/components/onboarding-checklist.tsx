@@ -16,7 +16,15 @@ import { HolidayList } from "@/components/holiday-list";
 */
 
 type Item = { id: string; label: string };
-type Day = { key: string; badge: string; title: string; badgeBg: string; badgeText: string; items: Item[] };
+type Day = {
+  key: string;
+  badge: string;
+  title: string;
+  badgeBg: string;
+  badgeText: string; // the day's colour — badge + checkboxes + ticks
+  cardTint: string; // faint frosted wash of the day's colour on the card
+  items: Item[];
+};
 
 const DAYS: Day[] = [
   {
@@ -25,6 +33,7 @@ const DAYS: Day[] = [
     title: "Welcome & induction",
     badgeBg: "#dbeafe",
     badgeText: "#1d4ed8",
+    cardTint: "rgba(199,221,246,0.42)",
     items: [
       { id: "d1-1", label: "Welcome kit and welcome video" },
       { id: "d1-2", label: "Experience Centre tour" },
@@ -39,6 +48,7 @@ const DAYS: Day[] = [
     title: "Culture & the brand",
     badgeBg: "#fbeecb",
     badgeText: "#a06a12",
+    cardTint: "rgba(247,231,190,0.44)",
     items: [
       { id: "d2-1", label: "Articulation assessment" },
       { id: "d2-2", label: "Magppie introduction" },
@@ -52,6 +62,7 @@ const DAYS: Day[] = [
     title: "Product & customer",
     badgeBg: "#ede9fe",
     badgeText: "#6d28d9",
+    cardTint: "rgba(225,219,248,0.46)",
     items: [
       { id: "d3-1", label: "SUNROOOF as a wellness lighting product" },
       { id: "d3-2", label: "The customer journey" },
@@ -208,13 +219,15 @@ export function OnboardingChecklist() {
         {/* heading */}
         <header className="mt-8 md:mt-10">
           <h1
-            className="font-[family-name:var(--font-sora)] text-3xl font-semibold tracking-tight md:text-4xl"
+            className="font-[family-name:var(--font-sora)] text-3xl font-semibold tracking-tight md:text-[2.4rem] md:leading-[1.1]"
             style={{ color: NAVY }}
           >
-            Onboarding checklist
+            Check off your three-day checklist
           </h1>
-          <p className="mt-2 text-[15px]" style={{ color: "rgba(28,43,74,0.72)" }}>
-            {allComplete ? "Your induction is complete — welcome to SUNROOOF. ☀" : "Your first three days, in order."}
+          <p className="mt-2.5 text-[15px]" style={{ color: "rgba(28,43,74,0.72)" }}>
+            {allComplete
+              ? "Your induction is complete — welcome to SUNROOOF. ☀"
+              : "Three days, in order. Tick each thing off as you finish it."}
           </p>
         </header>
 
@@ -248,8 +261,8 @@ export function OnboardingChecklist() {
                   key={day.key}
                   className="relative z-10 rounded-2xl border p-5 backdrop-blur-md transition-colors duration-500 md:p-6"
                   style={{
-                    backgroundColor: complete ? "rgba(255,251,238,0.55)" : "rgba(255,255,255,0.45)",
-                    borderColor: complete ? "rgba(224,167,44,0.55)" : "rgba(255,255,255,0.6)",
+                    backgroundColor: day.cardTint,
+                    borderColor: complete ? "rgba(224,167,44,0.65)" : "rgba(255,255,255,0.65)",
                     boxShadow: "0 8px 30px rgba(120,140,175,0.14)",
                   }}
                 >
@@ -278,12 +291,12 @@ export function OnboardingChecklist() {
                           >
                             <span
                               className={cn(
-                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
-                                checked ? "border-transparent" : "border-[#9fb0cc] bg-white/60",
+                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition",
+                                checked ? "border-transparent" : "bg-white/55",
                               )}
-                              style={checked ? { backgroundColor: NAVY } : undefined}
+                              style={checked ? { backgroundColor: day.badgeText } : { borderColor: `${day.badgeText}80` }}
                             >
-                              {checked && <IconCheck size={14} stroke={3} className="text-white" />}
+                              {checked && <IconCheck size={14} stroke={3.5} className="text-white" />}
                             </span>
                             <span
                               className={cn("text-sm leading-snug transition", checked && "line-through")}
