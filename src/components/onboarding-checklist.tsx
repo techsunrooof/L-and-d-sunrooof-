@@ -62,8 +62,26 @@ const ALL_IDS = DAYS.flatMap((d) => d.items.map((i) => i.id));
 const STORAGE_KEY = "sunrooof-onboarding-checklist";
 const NAVY = "#1c2b4a";
 
+const BG_CLIPS = ["/brand/hero.mp4", "/brand/hero-2.mp4"];
+
 export function OnboardingChecklist() {
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [bgIndex, setBgIndex] = useState(0);
+  const [reduced, setReduced] = useState(false);
+
+  // Moving 3D skylight background — cross-fade between the SUNROOOF clips.
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (reduced) return;
+    const id = setInterval(() => setBgIndex((x) => (x + 1) % BG_CLIPS.length), 4000);
+    return () => clearInterval(id);
+  }, [reduced]);
 
   // Restore ticks (per learner, this browser).
   useEffect(() => {
@@ -96,10 +114,26 @@ export function OnboardingChecklist() {
 
   return (
     <div className="relative min-h-[calc(100vh-1px)] md:min-h-screen">
-      {/* real SUNROOOF light-burst photo behind everything */}
+      {/* real SUNROOOF skylight video behind everything — moving/3D, no person */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/future-light.jpg" alt="" className="h-full w-full object-cover" />
+        {reduced ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/brand/hero-poster.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : (
+          BG_CLIPS.map((src, i) => (
+            <video
+              key={src}
+              src={src}
+              poster="/brand/hero-poster.jpg"
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out"
+              style={{ opacity: i === bgIndex ? 1 : 0 }}
+            />
+          ))
+        )}
         {/* sky-blue -> warm gold pastel wash, see-through */}
         <div
           className="absolute inset-0"
