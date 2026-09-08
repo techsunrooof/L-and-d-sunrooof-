@@ -211,7 +211,7 @@ export function OnboardingChecklist() {
             className="font-[family-name:var(--font-sora)] text-3xl font-semibold tracking-tight md:text-4xl"
             style={{ color: NAVY }}
           >
-            Onboarding
+            Onboarding checklist
           </h1>
           <p className="mt-2 text-[15px]" style={{ color: "rgba(28,43,74,0.72)" }}>
             {allComplete ? "Your induction is complete — welcome to SUNROOOF. ☀" : "Your first three days, in order."}

@@ -21,7 +21,7 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { href: "/", label: "Home", Icon: IconHome, match: (p) => p === "/" || p.startsWith("/day") },
-  { href: "/onboarding", label: "Onboarding", Icon: IconUserPlus },
+  { href: "/onboarding", label: "Onboarding checklist", Icon: IconUserPlus },
   { href: "/process", label: "Process flow", Icon: IconSitemap },
   { href: "/assistant", label: "AI assistant", Icon: IconSparkles },
 ];
