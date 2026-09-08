@@ -31,7 +31,13 @@ export async function signedVideoUrl(id: string, expiresIn = 3600): Promise<stri
       `${SUPABASE_URL}/storage/v1/object/sign/${BUCKET}/${encodeURIComponent(id)}.mp4`,
       {
         method: "POST",
-        headers: { Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
+        // Supabase Storage needs BOTH apikey and Authorization — omitting apikey
+        // makes the sign call fail (that broke video on the deploy).
+        headers: {
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ expiresIn }),
         cache: "no-store",
       },
