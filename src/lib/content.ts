@@ -886,13 +886,10 @@ export const MODULES: Module[] = [
   {
     id: "d1m4", day: 1, order: 4, title: "Company policy",
     items: [
-      // SLOT — SUNROOOF's own company-policy video (the team is supplying a
-      // compressed file; NOT a YouTube link). When it arrives: put it at
-      // media/videos/d1-company-policy.mp4 (dev) and in the private Supabase
-      // bucket (live), then set src: "/api/video/d1-company-policy" + the real
-      // durationSeconds. Plays through the existing player and counts toward
-      // progress like every other video. Pending the file.
-      pendingVideo("1.6", "d1-company-policy", "Company policy"),
+      // LOADED — SUNROOOF's company-policy video, SELF-HOSTED: compressed and
+      // stored in the private Supabase bucket, streamed through the
+      // unlock-checked /api/video route. Counts toward progress like the rest.
+      { kind: "video", id: "d1-company-policy", number: "1.6", title: "Company policy", durationSeconds: 3573, src: "/api/video/d1-company-policy", youtubeId: null, thumbnail: "/photos/poster-d1-company-policy.jpg" },
     ],
   },
 
