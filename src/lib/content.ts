@@ -110,6 +110,8 @@ type ItemBase = {
 
 export type VideoItem = ItemBase & {
   kind: "video";
+  /** One line on what the learner gets from it. Omitted when nobody wrote one. */
+  blurb?: string;
   durationSeconds: number;
   /** Local MP4 route, or null when the real video isn't available yet. */
   src: string | null;
@@ -945,15 +947,20 @@ export const MODULES: Module[] = [
   {
     id: "d4m1", day: 4, order: 1, title: "Understanding the site",
     items: [
-      // LOADED — construction site video (YouTube, from Shivang) → Day 4 Module 1 (§4.3).
-      { kind: "video", id: "d4-construction-site", number: "4.1", title: "Understanding a Construction Site", durationSeconds: 0, src: null, youtubeId: "vkew-1KK3Sc", thumbnail: null },
+      // LOADED — construction site video (from Shivang), self-hosted → Day 4 Module 1 (§4.3).
+      { kind: "video", id: "d4-construction-site", number: "4.1", title: "Understanding a Construction Site",
+        blurb: "A 3D animation of a building going up step by step — footings, rebar, columns, beams, slabs and stairs.",
+        durationSeconds: 374, src: "/api/video/d4-construction-site", youtubeId: null, thumbnail: "/photos/poster-d4-construction-site.jpg" },
+      pendingAssessment("d4-construction-site-assessment", "Construction site assessment"),
     ],
   },
   {
     id: "d4m2", day: 4, order: 2, title: "Reading architectural layouts",
     items: [
-      // LOADED — layout video (YouTube, from Shivang) → Day 4 Module 2 (§4.3).
-      { kind: "video", id: "d4-architectural-layout", number: "4.2", title: "Reading an Architectural Layout", durationSeconds: 0, src: null, youtubeId: "czrhWbjkjvM", thumbnail: null },
+      // LOADED — layout video (from Shivang), self-hosted → Day 4 Module 2 (§4.3).
+      { kind: "video", id: "d4-architectural-layout", number: "4.2", title: "Reading an Architectural Layout",
+        blurb: "Line weights, scale and plan symbols explained, then walked through on a real ground-floor plan.",
+        durationSeconds: 505, src: "/api/video/d4-architectural-layout", youtubeId: null, thumbnail: "/photos/poster-d4-architectural-layout.jpg" },
       pendingAssessment("d4-layout-assignment", "Layout reading assignment"),
     ],
   },

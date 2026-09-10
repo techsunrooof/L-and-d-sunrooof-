@@ -260,6 +260,7 @@ export type ClientItemDetail =
       id: string;
       number: string;
       title: string;
+      blurb: string | null;
       status: ItemStatus;
       durationSeconds: number;
       src: string | null;

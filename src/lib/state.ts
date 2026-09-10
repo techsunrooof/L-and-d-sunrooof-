@@ -84,6 +84,7 @@ export function buildItemDetail(learnerId: string, itemId: string): ClientItemDe
       id: item.id,
       number: item.number,
       title: item.title,
+      blurb: item.blurb ?? null,
       status: view.status,
       durationSeconds: item.durationSeconds,
       src: item.src,

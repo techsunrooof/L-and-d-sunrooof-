@@ -154,6 +154,7 @@ export function DayModule({
                 <p className="mt-1 text-sm text-grey">
                   {detail.youtubeId ? "YouTube video" : fmt(detail.durationSeconds)} · {videoStateWords(detail)}
                 </p>
+                {detail.blurb && <p className="mt-1.5 max-w-prose text-sm text-ink/70">{detail.blurb}</p>}
               </div>
             </>
           ) : detail.kind === "document" ? (
