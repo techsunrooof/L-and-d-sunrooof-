@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "knowledge:rebuild": "node --experimental-strip-types scripts/rebuild-knowledge.ts",
+    "knowledge:export": "node --experimental-strip-types scripts/rebuild-knowledge.ts --export"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",

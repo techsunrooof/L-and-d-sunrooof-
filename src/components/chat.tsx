@@ -85,7 +85,9 @@ export function Chat({
     );
   }
 
-  async function sendText(text: string) {
+  // `spoken` marks a question asked through the mic: the answer comes back
+  // shaped for the ear (counted points, no bullet symbols) instead of the eye.
+  async function sendText(text: string, spoken = false) {
     const clean = text.trim();
     if (!clean || busy) return;
     const next = [...messagesRef.current, { id: uid(), role: "user" as const, content: clean }];
@@ -99,7 +101,10 @@ export function Chat({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next.map(({ role, content }) => ({ role, content })) }),
+        body: JSON.stringify({
+          messages: next.map(({ role, content }) => ({ role, content })),
+          mode: spoken ? "voice" : "text",
+        }),
       });
       if (res.status === 503) {
         setNotice("The assistant isn't switched on yet — an OpenRouter API key needs to be added on the server.");
@@ -225,7 +230,7 @@ export function Chat({
         setNotice("I couldn't make out any speech there. Please try again.");
         return;
       }
-      await sendText(text); // never send an empty question
+      await sendText(text, true); // never send an empty question; answer is shaped for the ear
     } catch {
       setNotice("Voice isn't available right now — please type your question instead.");
     } finally {

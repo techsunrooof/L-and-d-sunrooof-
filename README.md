@@ -52,6 +52,41 @@ and unlocked state is always **derived** from that, never stored.
 Days and slots that have no real content yet are shown as genuinely empty — a
 read-only `/admin/coverage` page lists exactly what exists and what's missing.
 
+## The AI assistant and its knowledge base
+
+One knowledge base, one retrieval path, two delivery styles. The chat bot and
+the voice bot both go through `POST /api/chat`; a question asked through the mic
+is sent with `mode: "voice"`, which swaps the format rules (counted points said
+out loud, no bullet characters) but never the material.
+
+The knowledge base is **not in this repository** — it carries internal policy
+and sales material. It lives in Supabase (`public.sunrooof_ld_knowledge`, RLS on,
+read server-side only) as one small entry per topic, labelled with its day and
+module. [`src/lib/knowledge.ts`](src/lib/knowledge.ts) ranks the entries against
+the question and passes only the few best ones to the model — never the whole
+base.
+
+### Rebuilding it
+
+```bash
+npm run knowledge:rebuild        # rebuild the table
+npm run knowledge:rebuild -- --dry   # show the diff, write nothing
+npm run knowledge:export         # dump the table back out to source files
+```
+
+The rebuild has two halves:
+
+- **Portal structure** (one entry per day) is *generated* from
+  `src/lib/content.ts`, so it can never drift from the real day/module list. An
+  item with no content loaded is described as not loaded yet — never invented.
+- **Supplied content** (policy, documents, transcripts) is read from
+  `KNOWLEDGE_SOURCE_DIR`, a folder outside the repo (default
+  `../sunrooof-ld-knowledge`), one Markdown file per topic with a small front
+  matter block for `title`, `kind`, `day` and `module`.
+
+A topic nobody has supplied simply has no file, and the assistant says it isn't
+loaded rather than guessing.
+
 ## Sequential locking is currently OFF
 
 The sequential lock (must finish each video + its assessment before the next
