@@ -32,7 +32,8 @@
   invent content. A topic that has not been supplied simply has no file.
 */
 
-import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DAYS, MODULES, POLICY_CATEGORIES } from "../src/lib/content.ts";
@@ -137,17 +138,86 @@ function structureEntries(): Entry[] {
   To update a policy: change it in src/lib/content.ts, bump its version, then
   run `npm run knowledge:rebuild`.
 */
+/*
+  PDF policies are read straight from the PDF on every rebuild, so replacing the
+  file (and bumping its version) is all it takes for the assistant to follow.
+  Text comes out via macOS PDFKit (scripts/pdftext.swift), compiled once into
+  node_modules/.cache. Rebuilds run on a Mac.
+*/
+function pdfText(file: string): string {
+  const bin = join(ROOT, "node_modules", ".cache", "pdftext");
+  const src = join(ROOT, "scripts", "pdftext.swift");
+  if (!existsSync(bin) || statSync(bin).mtimeMs < statSync(src).mtimeMs) {
+    mkdirSync(dirname(bin), { recursive: true });
+    console.log("Compiling the PDF text extractor (first run only)…");
+    execFileSync("swiftc", ["-O", src, "-o", bin], { stdio: "inherit" });
+  }
+  return execFileSync(bin, [file], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+}
+
+/**
+ * Split a policy PDF's text at its own headings: "1. Title" … before the
+ * policies part, then "7.1 TITLE" … within it. Page numbers and the contents
+ * page are dropped. Lists inside a section stay with that section.
+ */
+function splitPolicyPdf(text: string): { heading: string; body: string }[] {
+  const lines = text.split("\n").map((l) => l.trimEnd()).filter((l) => !/^\s*\d{1,2}\s*$/.test(l));
+  const start = lines.findIndex((l) => /^1\.\s+[A-Z]/.test(l));
+  const out: { heading: string; body: string[] }[] = [];
+  let inPolicies = false;
+  for (const line of lines.slice(Math.max(0, start))) {
+    const top = /^(\d+)\.\s+([A-Z][^:]{2,60})$/.exec(line);
+    const sub = /^(\d+\.\d+)\s+([A-Z][^:]{2,60})$/.exec(line);
+    // "7.3 c) LEAVE POLICY" — a lettered sub-section of a policy.
+    const lettered = /^(\d+\.\d+)\s+([a-z])\)\s*([A-Z][^:]{2,70})$/.exec(line);
+    if (lettered) {
+      out.push({ heading: `${lettered[1]} ${lettered[2]}) ${titleCase(lettered[3])}`, body: [] });
+    } else if (sub) {
+      out.push({ heading: `${sub[1]} ${titleCase(sub[2])}`, body: [] });
+    } else if (top && !inPolicies) {
+      if (/^POLICIES$/i.test(top[2].trim())) {
+        inPolicies = true; // its sub-sections (7.1 …) become the entries
+        continue;
+      }
+      out.push({ heading: top[2].trim(), body: [] });
+    } else if (out.length) {
+      out[out.length - 1].body.push(line);
+    }
+  }
+  return out
+    .map((s) => ({ heading: s.heading, body: s.body.join("\n").trim() }))
+    .filter((s) => s.body.length > 0);
+}
+
+/** "CODE OF CONDUCT" -> "Code of Conduct"; "POLICY(EPP)" keeps its acronym. */
+const titleCase = (s: string) =>
+  s
+    .trim()
+    .toLowerCase()
+    .replace(/\b([a-z])/g, (m) => m.toUpperCase())
+    .replace(/(?!^)\b(And|Of|The|For|In|On|To)\b/g, (w) => w.toLowerCase())
+    .replace(/\(([a-z]+)\)/gi, (_, a: string) => ` (${a.toUpperCase()})`)
+    .replace(/\s+\(/g, " (");
+
 function policyEntries(): Entry[] {
   const out: Entry[] = [];
   for (const mod of MODULES) {
-    if (mod.library !== "policy") continue;
     for (const item of mod.items) {
       if (item.kind !== "document" || !item.policy || item.policy.status !== "current") continue;
-      const category = POLICY_CATEGORIES.find((c) => c.id === item.policy!.category)?.name ?? "Uncategorised";
+      const category = mod.library === "policy"
+        ? POLICY_CATEGORIES.find((c) => c.id === item.policy!.category)?.name
+        : undefined;
       const sourceLine =
-        `Source: ${item.title} (version ${item.policy.version}), HR Policy module, Day ${mod.day} — category: ${category}. ` +
-        "Owner: HR at SUNROOOF. For anything this policy does not cover, ask HR.";
-      for (const section of item.sections ?? []) {
+        `Source: ${item.title} (version ${item.policy.version}), ${mod.title} module, Day ${mod.day}` +
+        (category ? ` — category: ${category}` : "") +
+        ". Owner: HR at SUNROOOF. For anything this policy does not cover, ask HR.";
+      const pdf = !item.sections && item.policy.original?.mime === "application/pdf"
+        ? join(ROOT, "media", "documents", "originals", item.policy.original.file)
+        : null;
+      const sections = item.sections ?? (pdf ? splitPolicyPdf(pdfText(pdf)) : []);
+      const skips = new Set((item.policy.assistantSkips ?? []).map((x) => x.toLowerCase()));
+      for (const section of sections) {
+        if (skips.has(section.heading.toLowerCase())) continue;
         out.push({
           title: `${item.title} — ${section.heading}`,
           kind: "policy",

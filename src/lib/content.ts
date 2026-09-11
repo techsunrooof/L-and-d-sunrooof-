@@ -145,6 +145,9 @@ export type PolicyMeta = {
   /** The original file exactly as supplied, for Download. Lives in
    *  media/documents/originals/. null when only a PDF is held. */
   original: { file: string; mime: string; label: string } | null;
+  /** Sections of a PDF policy the ASSISTANT should not read (the reader still
+   *  shows the whole document) — e.g. company history that is not a policy. */
+  assistantSkips?: string[];
 };
 
 /** A category card in the HR Policy module. Only categories that actually hold
@@ -941,6 +944,36 @@ export const MODULES: Module[] = [
       // stored in the private Supabase bucket, streamed through the
       // unlock-checked /api/video route. Counts toward progress like the rest.
       { kind: "video", id: "d1-company-policy", number: "1.6", title: "Company policy", durationSeconds: 3573, src: "/api/video/d1-company-policy", youtubeId: null, thumbnail: "/photos/poster-d1-company-policy.jpg" },
+      // The company policy document. Supplied as "MAGPPIE POLICIES 31.03.2026";
+      // titled "SUNROOOF HR Policy" at the owner's request, and placed here in
+      // Company policy (not in the HR Policy module) at the owner's request.
+      // The text is Magppie's, unchanged — the policies are shared with SUNROOOF.
+      // `policy` metadata is kept so the assistant reads it from the PDF; it
+      // renders as a normal document here (no category card, no read tick).
+      {
+        kind: "document", id: "d1-doc-sunrooof-hr-policy", number: "", title: "SUNROOOF HR Policy",
+        file: "/api/document/d1-doc-sunrooof-hr-policy", sizeLabel: "486 KB", sections: null,
+        policy: {
+          category: "company-policies", // not shown: Company policy is not a policy library
+          description: "The company policies and code of conduct, as issued by Magppie (SUNROOOF's parent company) on 31 March 2026.",
+          version: 1,
+          uploadedBy: null, // not recorded
+          uploadedOn: "2026-09-11", // the day it entered the portal
+          status: "current",
+          original: {
+            file: "d1-doc-sunrooof-hr-policy-v1.pdf",
+            mime: "application/pdf",
+            label: "PDF · 486 KB",
+          },
+          // Kept out of what the ASSISTANT reads (the reader shows everything):
+          //  • Magppie's company history (kitchens, awards) is not a policy, and
+          //    would have the assistant describe Magppie as "our company".
+          //  • Magppie's own dress code — SUNROOOF's dress code deck in the HR
+          //    Policy module is the one the assistant answers from, so it never
+          //    gives two different answers to the same question.
+          assistantSkips: ["About the Company", "7.2 d) Dress Code"],
+        },
+      },
     ],
   },
   {
