@@ -45,6 +45,8 @@ const RULES = [
   "Answer in points. Not paragraphs.",
   "At most ONE short lead-in line, and only if it helps. Then the points.",
   "Three to six points is a normal answer. Go to eight only when the question genuinely has that many parts. A one-fact question gets one or two points, not padding.",
+  "EIGHT POINTS IS A HARD CEILING for the whole answer, counting every group and sub-list together. Two lists of five is ten points and is not allowed.",
+  "When a policy has separate guidance for men and for women (or for two roles) and the person has not said which applies to them, give at most FOUR essentials that apply to everyone, then ask which list they want in full — e.g. 'Want the full list for men or for women?'.",
   "One idea per point. Keep each point to a single line where you can. Never pack several facts into one point separated by semicolons — split them into their own points, or give the short version and offer the rest.",
   "Numbered points (1. 2. 3.) when the order matters — steps, stages, a process. Bullet points ('• ') when it does not.",
   "Never nest more than one level deep.",
@@ -69,7 +71,7 @@ const RULES = [
   "",
   "WHEN YOU DO NOT KNOW",
   "Say plainly that it is not in the onboarding content yet.",
-  "Say which day or module it would belong to ONLY if the material makes that clear. Never guess a day.",
+  "Say which day or module it would belong to ONLY if the material makes that clear. Never guess a day. Never say where it would 'likely' or 'probably' be — if the material does not say, say nothing about where.",
   "If the item exists in the portal but is not loaded yet, say exactly that — do not tell them to go and look for it.",
   "Keep the refusal to a line or two. It does not need points.",
   "Say who to ask — HR for policy, pay and leave; their manager or team lead for work and schedule.",
@@ -93,11 +95,12 @@ const VOICE_RULES = [
   "Keep the points, but say them the way a person would: 'There are four things. First… Second… Third… Fourth…'.",
   "Say the total count up front so the listener knows how long the answer is.",
   "Maximum FOUR points spoken. If the real answer has more, give the first four and offer the rest: 'There are three more — want me to go on?'.",
+  "If the guidance differs for men and women and the person has not said which applies, speak only the essentials that apply to everyone, then ask: 'Want it for men or for women?'. Never answer for one without saying so and offering the other.",
   "Each spoken point is one short sentence, under about fifteen words.",
   "Do not read out long lists of names, numbers or file names. If the answer is really a table or a long list, say so and point them to the screen.",
   "Say numbers, dates and times in full words, not shorthand.",
   "Answer in the language the question was asked in — a Hindi or Hinglish question gets a Hindi or Hinglish answer, spoken the same way.",
-  "No source line with a file name — instead say where it is, e.g. 'It's on Day one in the portal.'",
+  "Never read out a file name. But when the answer comes from an HR policy, SAY THE POLICY'S NAME out loud so they know where it came from — e.g. 'That's from the Attire and dress code policy, on Day one.' For anything else, say where it is, e.g. 'It's on Day one in the portal.'",
 ].join("\n");
 
 function buildSystemPrompt(knowledge: string, baseEmpty: boolean, voice: boolean): string {
@@ -112,6 +115,34 @@ function buildSystemPrompt(knowledge: string, baseEmpty: boolean, voice: boolean
       "SUNROOOF KNOWLEDGE BASE: nothing in the onboarding material matches this question. Say so plainly, say which day or module it would belong to if that is clear, and say who to ask. Do not answer it from general knowledge.";
   }
   return `${RULES}\n\n${kb}${voice ? `\n${VOICE_RULES}` : ""}`;
+}
+
+/** Points in a plain-text answer: lines starting "• " or "1. ". */
+const countPoints = (text: string) => text.split("\n").filter((l) => /^\s*(•|\d+\.)\s/.test(l)).length;
+
+/** The hard rules a chat answer can be checked against mechanically. */
+function breakingRules(text: string, policyTitles: string[]): string[] {
+  const problems: string[] = [];
+  const points = countPoints(text);
+  if (points > 8) {
+    problems.push(
+      `It has ${points} points. Eight is the hard maximum for the whole answer, counting every group. ` +
+        "If the guidance differs for men and women and they did not say which applies, give at most four essentials " +
+        "that apply to everyone and ask which list they want in full.",
+    );
+  }
+  if (/\b(likely|probably)\b[^.\n]*\b(module|day)\b/i.test(text)) {
+    problems.push(
+      "It guesses where the missing information would be (\"likely …\"). The material does not say, so say nothing " +
+        "about where — only that it is not in the onboarding content yet, and to ask HR.",
+    );
+  }
+  if (policyTitles.length > 0 && points > 0 && !/source:/i.test(text)) {
+    problems.push(
+      `It is missing the source line. End with: 'Source: ${policyTitles[0]} (HR Policy, Day 1)'.`,
+    );
+  }
+  return problems;
 }
 
 export async function POST(req: NextRequest) {
@@ -135,10 +166,18 @@ export async function POST(req: NextRequest) {
 
   let knowledgeBlock = "";
   let baseEmpty = true;
+  // The HR policies behind this answer, by title — so the answer can be held
+  // to naming them.
+  let policyTitles: string[] = [];
   try {
     const { entries, baseEmpty: empty } = await knowledgeForQuestion(question, context);
     knowledgeBlock = buildKnowledgeContext(entries);
     baseEmpty = empty;
+    policyTitles = [
+      ...new Set(
+        entries.filter((e) => e.kind === "policy" && e.module === "HR Policy").map((e) => e.title.split(" — ")[0]),
+      ),
+    ];
     if (process.env.ASSISTANT_DEBUG === "on") {
       console.log(`[assistant] retrieved ${entries.length}: ${entries.map((e) => e.title).join(" | ") || "(no match)"}`);
     }
@@ -173,10 +212,40 @@ export async function POST(req: NextRequest) {
       // the model's full output window and rejects the call with a 402.
       max_tokens: 700,
     });
-    const content = completion.choices[0]?.message?.content?.trim() ?? "";
+    let content = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!content) {
       return Response.json({ error: "empty" }, { status: 502 });
     }
+
+    // The prompt alone does not reliably hold the hard rules when retrieval
+    // hands over two long lists (a men's and a women's dress code), so a chat
+    // answer is CHECKED, and gets exactly one correction if it breaks them.
+    // Never a loop: whatever the retry returns is what is sent.
+    const problems = parsed.mode === "text" ? breakingRules(content, policyTitles) : [];
+    if (problems.length > 0) {
+      const retry = await client.chat.completions.create({
+        model: process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini",
+        messages: [
+          { role: "system", content: buildSystemPrompt(knowledgeBlock, baseEmpty, false) },
+          ...recent,
+          { role: "assistant", content },
+          {
+            role: "user",
+            content:
+              `Rewrite your last answer. It broke these rules:\n${problems.map((p) => `- ${p}`).join("\n")}\n` +
+              "Use only what the material says. Reply with the corrected answer only.",
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 700,
+      });
+      const fixed = retry.choices[0]?.message?.content?.trim();
+      if (fixed) content = fixed;
+      if (process.env.ASSISTANT_DEBUG === "on") {
+        console.log(`[assistant] corrected: ${problems.join(" / ")} → ${breakingRules(content, policyTitles).length} left`);
+      }
+    }
+
     return Response.json({ content });
   } catch (err) {
     console.error("[assistant] chat error", err);
