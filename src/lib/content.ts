@@ -945,13 +945,14 @@ export const MODULES: Module[] = [
       // unlock-checked /api/video route. Counts toward progress like the rest.
       { kind: "video", id: "d1-company-policy", number: "1.6", title: "Company policy", durationSeconds: 3573, src: "/api/video/d1-company-policy", youtubeId: null, thumbnail: "/photos/poster-d1-company-policy.jpg" },
       // The company policy document. Supplied as "MAGPPIE POLICIES 31.03.2026";
-      // titled "SUNROOOF HR Policy" at the owner's request, and placed here in
+      // titled "SUNROOOF Company Policy" at the owner's request (the id keeps its
+      // original "hr-policy" name so no link or stored file breaks), placed here in
       // Company policy (not in the HR Policy module) at the owner's request.
       // The text is Magppie's, unchanged — the policies are shared with SUNROOOF.
       // `policy` metadata is kept so the assistant reads it from the PDF; it
       // renders as a normal document here (no category card, no read tick).
       {
-        kind: "document", id: "d1-doc-sunrooof-hr-policy", number: "", title: "SUNROOOF HR Policy",
+        kind: "document", id: "d1-doc-sunrooof-hr-policy", number: "", title: "SUNROOOF Company Policy",
         file: "/api/document/d1-doc-sunrooof-hr-policy", sizeLabel: "486 KB", sections: null,
         policy: {
           category: "company-policies", // not shown: Company policy is not a policy library
