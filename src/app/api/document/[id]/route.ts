@@ -60,10 +60,16 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   }
 
   const size = buf.length;
+  // The saved file is named after the document's TITLE (with its version, for
+  // a policy), not its internal id — the viewer's Download button takes its
+  // name from here, so a learner gets "SUNROOOF Company Policy (v1).pdf"
+  // rather than "d1-doc-sunrooof-hr-policy.pdf".
+  const niceName = item.title.replace(/[^A-Za-z0-9 ._-]+/g, "").trim() || id;
+  const fileName = item.policy ? `${niceName} (v${item.policy.version}).pdf` : `${niceName}.pdf`;
   const base: Record<string, string> = {
     "Content-Type": "application/pdf",
     "Accept-Ranges": "bytes",
-    "Content-Disposition": `inline; filename="${id}.pdf"`,
+    "Content-Disposition": `inline; filename="${fileName}"`,
     "Cache-Control": "private, no-store",
   };
 
