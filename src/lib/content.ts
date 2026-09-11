@@ -163,6 +163,9 @@ export type DocumentItem = ItemBase & {
   kind: "document";
   /** Present only on HR Policy documents. */
   policy?: PolicyMeta;
+  /** Opening this row takes the learner straight to the HR Policy module
+   *  (the category cards) instead of an empty document page. */
+  pointsTo?: "policy-library";
   /** Served through /api/document/[id]; null when the file isn't in yet. */
   file: string | null;
   sizeLabel: string | null;
@@ -922,7 +925,9 @@ export const MODULES: Module[] = [
     id: "d1m3", day: 1, order: 3, title: "Documents and assessment",
     items: [
       pendingDoc("d1-doc-welcome-kit", "Welcome kit"),
-      pendingDoc("d1-doc-hr-policies", "HR policies"),
+      // Points to the HR Policy module (d1m5), where HR's policies live, rather
+      // than opening an empty page. Kept, not deleted.
+      { ...pendingDoc("d1-doc-hr-policies", "HR policies"), pointsTo: "policy-library" },
       // The attire and dress code policy MOVED to the HR Policy module (d1m5).
       pendingDoc("d1-doc-vision", "Vision document"),
       // LOADED — the vision alignment assessment (HR file, transcribed verbatim).

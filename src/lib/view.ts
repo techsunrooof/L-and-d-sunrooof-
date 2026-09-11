@@ -322,6 +322,8 @@ export type PolicyCategoryVM = {
 export type PolicyLibraryVM = {
   moduleId: string;
   title: string;
+  /** Rows elsewhere in the day that open this library (e.g. "HR policies"). */
+  pointerIds: string[];
   categories: PolicyCategoryVM[];
   currentTotal: number;
   readTotal: number;

@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { getItem, getModule, POLICY_CATEGORIES } from "./content";
+import { getItem, getModule, modulesForDay, POLICY_CATEGORIES } from "./content";
 import {
   computeState,
   findItemView,
@@ -289,9 +289,15 @@ export function buildPolicyLibrary(learnerId: string, moduleId: string): PolicyL
     // A category with no document is left out entirely — never an empty card.
     .filter((c) => c.docs.length > 0);
 
+  const pointerIds = modulesForDay(mod.day)
+    .flatMap((m) => m.items)
+    .filter((i) => i.kind === "document" && i.pointsTo === "policy-library")
+    .map((i) => i.id);
+
   return {
     moduleId: mod.id,
     title: mod.title,
+    pointerIds,
     categories,
     currentTotal: categories.reduce((n, c) => n + c.currentCount, 0),
     readTotal: categories.reduce((n, c) => n + c.readCount, 0),

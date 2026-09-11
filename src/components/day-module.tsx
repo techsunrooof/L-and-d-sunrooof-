@@ -102,6 +102,12 @@ export function DayModule({
 
   const select = useCallback(
     async (id: string) => {
+      // "HR policies" points at the HR Policy module: open its cards.
+      if (library?.pointerIds.includes(id)) {
+        setPolicyMode({});
+        setSelectedId(undefined);
+        return;
+      }
       // A policy document opens in the HR Policy reader, not the plain pane.
       if (policyIds.has(id)) {
         setPolicyMode({ docId: id });

@@ -40,11 +40,15 @@ export default async function DayPage({
     else redirect(`/day/${dayNumber}`);
   }
 
-  const detail = selectedId ? buildItemDetail(learnerId, selectedId) : null;
-
   // Day 1's HR Policy module renders as category cards + a reader.
   const policyModule = modulesForDay(dayNumber).find((m) => m.library === "policy");
   const policyLibrary = policyModule ? buildPolicyLibrary(learnerId, policyModule.id) : null;
+
+  // "HR policies" (and any other pointer row) opens the HR Policy cards — from
+  // the home page, a bookmark or a shared link alike.
+  if (item && policyLibrary?.pointerIds.includes(item)) redirect(`/day/${dayNumber}?view=policies`);
+
+  const detail = selectedId ? buildItemDetail(learnerId, selectedId) : null;
 
   return (
     <DayModule

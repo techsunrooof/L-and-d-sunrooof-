@@ -83,6 +83,7 @@ function describeItem(item: (typeof MODULES)[number]["items"][number]): string {
     return `${number}${item.title} (video, ${minutes(item.durationSeconds)})`;
   }
   if (item.kind === "document") {
+    if (item.pointsTo === "policy-library") return `${item.title} (opens the HR Policy module)`;
     if (!item.file && !item.sections) return `${item.title} (document — not loaded yet)`;
     return `${item.title} (document)`;
   }
