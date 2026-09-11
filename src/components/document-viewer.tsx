@@ -5,9 +5,12 @@ import type { ClientItemDetail } from "@/lib/view";
 
 type DocumentDetail = Extract<ClientItemDetail, { kind: "document" }>;
 
-export function DocumentViewer({ detail }: { detail: DocumentDetail }) {
+/** `bare` renders only the document body — used by the HR Policy reader, which
+ *  draws its own title, version and download around it. */
+export function DocumentViewer({ detail, bare = false }: { detail: DocumentDetail; bare?: boolean }) {
   return (
     <div>
+      {!bare && (
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
@@ -38,6 +41,7 @@ export function DocumentViewer({ detail }: { detail: DocumentDetail }) {
           </div>
         )}
       </div>
+      )}
 
       {/* An article kept as sections (e.g. "The Magppie Truth") */}
       {detail.sections && detail.sections.length > 0 ? (

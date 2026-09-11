@@ -8,9 +8,11 @@ import {
   submitAssessment,
   buildItemDetail,
   getState,
+  acknowledgePolicy,
+  buildPolicyLibrary,
 } from "@/lib/state";
 import { getItem, moduleForItem } from "@/lib/content";
-import { buildDaySnapshot, type DaySnapshot, type ClientItemDetail } from "@/lib/view";
+import { buildDaySnapshot, type DaySnapshot, type ClientItemDetail, type PolicyLibraryVM } from "@/lib/view";
 
 function dayOfItem(itemId: string): number | null {
   return moduleForItem(itemId)?.day ?? null;
@@ -89,4 +91,24 @@ export async function getItemDetailAction(itemId: string): Promise<ClientItemDet
   if (typeof itemId !== "string" || !itemId) return null;
   const learnerId = await getLearnerId();
   return buildItemDetail(learnerId, itemId);
+}
+
+export type AcknowledgePolicyResult = {
+  ok: boolean;
+  reason?: string;
+  library: PolicyLibraryVM | null;
+};
+
+/** "I have read this policy" — recorded against the document's current version. */
+export async function acknowledgePolicyAction(input: unknown): Promise<AcknowledgePolicyResult> {
+  const parsed = z.object({ itemId: z.string().min(1) }).safeParse(input);
+  if (!parsed.success) return { ok: false, reason: "bad-input", library: null };
+
+  const learnerId = await getLearnerId();
+  const res = acknowledgePolicy(learnerId, parsed.data.itemId);
+  const mod = moduleForItem(parsed.data.itemId);
+  const library = mod ? buildPolicyLibrary(learnerId, mod.id) : null;
+
+  if (!res.ok) return { ok: false, reason: res.reason, library };
+  return { ok: true, library };
 }

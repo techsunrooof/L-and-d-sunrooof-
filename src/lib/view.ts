@@ -288,3 +288,41 @@ export type ClientItemDetail =
       assessment: ClientAssessment;
       submission: ClientSubmission | null;
     };
+
+/* ---- HR Policy library (Day 1, module "HR Policy") ---- */
+
+export type PolicyDocVM = {
+  id: string;
+  title: string;
+  description: string;
+  categoryId: string;
+  version: number;
+  /** null = not recorded; the UI says so rather than guessing a name. */
+  uploadedBy: string | null;
+  uploadedOn: string; // YYYY-MM-DD
+  status: "current" | "withdrawn";
+  hasOriginal: boolean;
+  originalLabel: string | null;
+  /** Ticked for the CURRENT version. An older version's tick never counts. */
+  acknowledged: boolean;
+  acknowledgedAt: number | null;
+};
+
+export type PolicyCategoryVM = {
+  id: string;
+  name: string;
+  description: string;
+  docs: PolicyDocVM[];
+  /** Current (not withdrawn) documents in this category. */
+  currentCount: number;
+  /** Current documents this person has ticked at their current version. */
+  readCount: number;
+};
+
+export type PolicyLibraryVM = {
+  moduleId: string;
+  title: string;
+  categories: PolicyCategoryVM[];
+  currentTotal: number;
+  readTotal: number;
+};

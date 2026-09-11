@@ -35,7 +35,7 @@
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { DAYS, MODULES } from "../src/lib/content.ts";
+import { DAYS, MODULES, POLICY_CATEGORIES } from "../src/lib/content.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, "..");
@@ -124,6 +124,42 @@ function structureEntries(): Entry[] {
   });
 }
 
+/* ---------------- HR Policy: generated from the documents themselves ---------------- */
+
+/*
+  Policy entries are built from the SAME verbatim text the HR Policy reader
+  shows, so the assistant can never drift from the document. One entry per
+  section of each document (small pieces retrieve better than whole files),
+  each naming the policy and its version. Withdrawn policies are left out —
+  a stale answer on an HR rule is worse than no answer.
+
+  To update a policy: change it in src/lib/content.ts, bump its version, then
+  run `npm run knowledge:rebuild`.
+*/
+function policyEntries(): Entry[] {
+  const out: Entry[] = [];
+  for (const mod of MODULES) {
+    if (mod.library !== "policy") continue;
+    for (const item of mod.items) {
+      if (item.kind !== "document" || !item.policy || item.policy.status !== "current") continue;
+      const category = POLICY_CATEGORIES.find((c) => c.id === item.policy!.category)?.name ?? "Uncategorised";
+      const sourceLine =
+        `Source: ${item.title} (version ${item.policy.version}), HR Policy module, Day ${mod.day} — category: ${category}. ` +
+        "Owner: HR at SUNROOOF. For anything this policy does not cover, ask HR.";
+      for (const section of item.sections ?? []) {
+        out.push({
+          title: `${item.title} — ${section.heading}`,
+          kind: "policy",
+          day: mod.day,
+          module: mod.title,
+          body: `${section.body.trim()}\n\n${sourceLine}`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
 /* ---------------- the supplied half: one file per topic ---------------- */
 
 function parseFile(text: string, file: string): Entry {
@@ -194,7 +230,7 @@ async function exportToSource(): Promise<void> {
 }
 
 async function rebuild(dry: boolean, force: boolean): Promise<void> {
-  const next = [...structureEntries(), ...suppliedEntries()];
+  const next = [...structureEntries(), ...policyEntries(), ...suppliedEntries()];
   const current = await fetchActive();
 
   console.log(`Current table: ${current.length} entries. Rebuild would write: ${next.length}.`);

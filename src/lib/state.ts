@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db, schema } from "@/db";
-import { getItem } from "./content";
+import { getItem, getModule, POLICY_CATEGORIES } from "./content";
 import {
   computeState,
   findItemView,
@@ -9,7 +9,14 @@ import {
   type PortalState,
   type ProgressMap,
 } from "./locking";
-import { toClientAssessment, type ClientItemDetail, type ClientSubmission } from "./view";
+import {
+  toClientAssessment,
+  type ClientItemDetail,
+  type ClientSubmission,
+  type PolicyCategoryVM,
+  type PolicyDocVM,
+  type PolicyLibraryVM,
+} from "./view";
 
 /** A video counts as watched once real watched-time crosses this fraction (§6.5). */
 export const WATCH_THRESHOLD = 0.9;
@@ -213,4 +220,108 @@ export function submitAssessment(
     ok: true,
     submission: { answers: answers as ClientSubmission["answers"], submittedAt, awaitingReview: true },
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* HR Policy — the read-acknowledgement record                         */
+/* ------------------------------------------------------------------ */
+
+const UNCATEGORISED = "__needs-category";
+
+/**
+ * The HR Policy module as this learner sees it: category cards holding only
+ * categories that have a document, and whether each document has been ticked
+ * AT ITS CURRENT VERSION. An older version's tick is history, never progress.
+ */
+export function buildPolicyLibrary(learnerId: string, moduleId: string): PolicyLibraryVM | null {
+  const mod = getModule(moduleId);
+  if (!mod || mod.library !== "policy") return null;
+
+  const acks = db
+    .select()
+    .from(schema.policyAcknowledgements)
+    .where(eq(schema.policyAcknowledgements.learnerId, learnerId))
+    .all();
+
+  const docs: PolicyDocVM[] = mod.items.flatMap((item) => {
+    if (item.kind !== "document" || !item.policy) return [];
+    const p = item.policy;
+    const ack = acks.find((a) => a.itemId === item.id && a.version === p.version);
+    const known = POLICY_CATEGORIES.some((c) => c.id === p.category);
+    if (!known) {
+      // Never filed somewhere that "looks close" — surfaced for HR to categorise.
+      console.error(`[hr-policy] ${item.id} has unknown category "${p.category}" — needs a category from HR`);
+    }
+    return [
+      {
+        id: item.id,
+        title: item.title,
+        description: p.description,
+        categoryId: known ? p.category : UNCATEGORISED,
+        version: p.version,
+        uploadedBy: p.uploadedBy,
+        uploadedOn: p.uploadedOn,
+        status: p.status,
+        hasOriginal: p.original !== null,
+        originalLabel: p.original?.label ?? null,
+        acknowledged: Boolean(ack),
+        acknowledgedAt: ack?.acknowledgedAt ?? null,
+      },
+    ];
+  });
+
+  const categoryDefs = [
+    ...POLICY_CATEGORIES,
+    { id: UNCATEGORISED, name: "Needs a category from HR", description: "Supplied without a category. HR will say where it belongs." },
+  ];
+
+  const categories: PolicyCategoryVM[] = categoryDefs
+    .map((c) => {
+      const inCat = docs.filter((d) => d.categoryId === c.id);
+      const current = inCat.filter((d) => d.status === "current");
+      return {
+        ...c,
+        docs: inCat,
+        currentCount: current.length,
+        readCount: current.filter((d) => d.acknowledged).length,
+      };
+    })
+    // A category with no document is left out entirely — never an empty card.
+    .filter((c) => c.docs.length > 0);
+
+  return {
+    moduleId: mod.id,
+    title: mod.title,
+    categories,
+    currentTotal: categories.reduce((n, c) => n + c.currentCount, 0),
+    readTotal: categories.reduce((n, c) => n + c.readCount, 0),
+  };
+}
+
+export type AcknowledgeResult =
+  | { ok: true }
+  | { ok: false; reason: "unknown" | "not-policy" | "withdrawn" | "locked" };
+
+/**
+ * Record "I have read this policy" for the document's CURRENT version.
+ *
+ * Insert-only: a second tick changes nothing (the first time stands), and there
+ * is no path that removes one — a learner cannot undo it. It never gates
+ * anything; it is a record, not an assessment.
+ */
+export function acknowledgePolicy(learnerId: string, itemId: string): AcknowledgeResult {
+  const item = getItem(itemId);
+  if (!item) return { ok: false, reason: "unknown" };
+  if (item.kind !== "document" || !item.policy) return { ok: false, reason: "not-policy" };
+  if (item.policy.status === "withdrawn") return { ok: false, reason: "withdrawn" };
+
+  const state = computeState(getProgressMap(learnerId));
+  if (!isAccessible(state, itemId)) return { ok: false, reason: "locked" };
+
+  db
+    .insert(schema.policyAcknowledgements)
+    .values({ learnerId, itemId, version: item.policy.version, acknowledgedAt: Date.now() })
+    .onConflictDoNothing()
+    .run();
+  return { ok: true };
 }

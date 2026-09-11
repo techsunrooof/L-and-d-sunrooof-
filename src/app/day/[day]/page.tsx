@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getLearnerId } from "@/lib/learner";
-import { getState, buildItemDetail } from "@/lib/state";
-import { getDay } from "@/lib/content";
+import { getState, buildItemDetail, buildPolicyLibrary } from "@/lib/state";
+import { getDay, modulesForDay } from "@/lib/content";
 import { buildDaySnapshot } from "@/lib/view";
 import { getDayView, isAccessible } from "@/lib/locking";
 import { DayModule } from "@/components/day-module";
@@ -13,10 +13,10 @@ export default async function DayPage({
   searchParams,
 }: {
   params: Promise<{ day: string }>;
-  searchParams: Promise<{ item?: string }>;
+  searchParams: Promise<{ item?: string; view?: string }>;
 }) {
   const { day } = await params;
-  const { item } = await searchParams;
+  const { item, view } = await searchParams;
   const dayNumber = Number(day);
 
   const meta = getDay(dayNumber);
@@ -42,6 +42,10 @@ export default async function DayPage({
 
   const detail = selectedId ? buildItemDetail(learnerId, selectedId) : null;
 
+  // Day 1's HR Policy module renders as category cards + a reader.
+  const policyModule = modulesForDay(dayNumber).find((m) => m.library === "policy");
+  const policyLibrary = policyModule ? buildPolicyLibrary(learnerId, policyModule.id) : null;
+
   return (
     <DayModule
       dayNumber={dayNumber}
@@ -49,6 +53,8 @@ export default async function DayPage({
       initialSnapshot={snapshot}
       initialSelectedId={selectedId}
       initialDetail={detail}
+      policyLibrary={policyLibrary}
+      initialPolicyView={view === "policies" && Boolean(policyLibrary)}
     />
   );
 }

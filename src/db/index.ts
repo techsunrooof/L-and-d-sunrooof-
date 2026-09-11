@@ -62,6 +62,13 @@ const sqlite =
         score REAL,
         PRIMARY KEY (learner_id, item_id)
       );
+      CREATE TABLE IF NOT EXISTS policy_acknowledgements (
+        learner_id TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        acknowledged_at INTEGER NOT NULL,
+        PRIMARY KEY (learner_id, item_id, version)
+      );
     `);
     return conn;
   })();

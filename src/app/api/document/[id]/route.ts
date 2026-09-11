@@ -26,6 +26,31 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     return new Response("This document is not available yet.", { status: 403 });
   }
 
+  // HR Policy: ?original=1 hands over the file exactly as HR supplied it
+  // (e.g. the .pptx deck), versioned so an old download is never mistaken for
+  // the current one.
+  if (req.nextUrl.searchParams.get("original") === "1") {
+    const original = item.policy?.original;
+    if (!original) return new Response("No original file is held for this document.", { status: 404 });
+    let data: Buffer;
+    try {
+      data = await readFile(path.join(process.cwd(), "media", "documents", "originals", path.basename(original.file)));
+    } catch {
+      return new Response("The original file is not available.", { status: 404 });
+    }
+    const ext = path.extname(original.file);
+    const safeTitle = item.title.replace(/[^A-Za-z0-9 ._-]+/g, "").trim() || id;
+    return new Response(new Uint8Array(data), {
+      status: 200,
+      headers: {
+        "Content-Type": original.mime,
+        "Content-Length": String(data.length),
+        "Content-Disposition": `attachment; filename="${safeTitle} (v${item.policy?.version ?? 1})${ext}"`,
+        "Cache-Control": "private, no-store",
+      },
+    });
+  }
+
   const file = path.join(process.cwd(), "media", "documents", `${id}.pdf`);
   let buf: Buffer;
   try {

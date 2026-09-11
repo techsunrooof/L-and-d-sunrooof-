@@ -14,9 +14,10 @@ import { VideoPlayer } from "@/components/video-player";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { DocumentViewer } from "@/components/document-viewer";
 import { AssessmentForm } from "@/components/assessment-form";
+import { PolicyLibrary } from "@/components/policy-library";
 import { ItemStateLabel } from "@/components/status-chip";
 import { recordWatchAction, markVideoWatchedAction, getItemDetailAction } from "@/app/actions";
-import type { ClientItemDetail, DaySnapshot, ItemSnapshot } from "@/lib/view";
+import type { ClientItemDetail, DaySnapshot, ItemSnapshot, PolicyLibraryVM } from "@/lib/view";
 import type { ItemKind } from "@/lib/content";
 
 function KindIcon({ kind, locked }: { kind: ItemKind; locked: boolean }) {
@@ -44,15 +45,34 @@ export function DayModule({
   initialSnapshot,
   initialSelectedId,
   initialDetail,
+  policyLibrary = null,
+  initialPolicyView = false,
 }: {
   dayNumber: number;
   dayTitle: string;
   initialSnapshot: DaySnapshot;
   initialSelectedId: string | undefined;
   initialDetail: ClientItemDetail | null;
+  /** The HR Policy module, when this day has one (Day 1). */
+  policyLibrary?: PolicyLibraryVM | null;
+  /** Open straight onto the HR Policy category cards. */
+  initialPolicyView?: boolean;
 }) {
   const [snapshot, setSnapshot] = useState(initialSnapshot);
-  const [selectedId, setSelectedId] = useState(initialSelectedId);
+  const [library, setLibrary] = useState(policyLibrary);
+  const policyIds = new Set(library?.categories.flatMap((c) => c.docs.map((d) => d.id)) ?? []);
+  // null = the normal player pane; otherwise the HR Policy module is open,
+  // on its cards (no docId) or in the reader (docId).
+  const [policyMode, setPolicyMode] = useState<{ docId?: string } | null>(
+    initialPolicyView
+      ? {}
+      : initialSelectedId && policyIds.has(initialSelectedId)
+        ? { docId: initialSelectedId }
+        : null,
+  );
+  // Opening straight onto the HR Policy cards selects nothing in the playlist,
+  // so no other item is wrongly shown as "Open".
+  const [selectedId, setSelectedId] = useState(initialPolicyView ? undefined : initialSelectedId);
   const [detail, setDetail] = useState<ClientItemDetail | null>(initialDetail);
   const cache = useRef<Record<string, ClientItemDetail>>(
     initialDetail ? { [initialDetail.id]: initialDetail } : {},
@@ -82,6 +102,13 @@ export function DayModule({
 
   const select = useCallback(
     async (id: string) => {
+      // A policy document opens in the HR Policy reader, not the plain pane.
+      if (policyIds.has(id)) {
+        setPolicyMode({ docId: id });
+        setSelectedId(id);
+        return;
+      }
+      setPolicyMode(null);
       const row = allItems.find((v) => v.id === id);
       if (!row || !row.unlocked || id === selectedId) return;
       setSelectedId(id);
@@ -96,7 +123,8 @@ export function DayModule({
         }
       }
     },
-    [allItems, selectedId],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allItems, selectedId, library],
   );
 
   return (
@@ -130,7 +158,16 @@ export function DayModule({
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         {/* Main area — renders the selected item by kind */}
         <div className="min-w-0">
-          {!detail ? (
+          {policyMode && library ? (
+            <PolicyLibrary
+              key={policyMode.docId ?? "cards"}
+              library={library}
+              initialDocId={policyMode.docId}
+              initialDetail={detail && detail.id === policyMode.docId ? detail : null}
+              onLibraryChange={setLibrary}
+              onOpenDoc={(id) => setSelectedId(id)}
+            />
+          ) : !detail ? (
             <div className="flex aspect-video items-center justify-center rounded-[11px] border border-hairline text-sm text-grey">
               Select an item to begin.
             </div>
@@ -181,7 +218,23 @@ export function DayModule({
           <div className="flex flex-col gap-4">
             {snapshot.modules.map((m) => (
               <div key={m.id}>
-                <div className="mb-2 px-1 text-xs font-medium text-grey">{m.title}</div>
+                {library && m.id === library.moduleId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPolicyMode({});
+                      setSelectedId(undefined);
+                    }}
+                    className="mb-2 flex w-full items-center justify-between px-1 text-left text-xs font-medium text-grey transition hover:text-ink"
+                  >
+                    <span>{m.title}</span>
+                    <span className="font-normal">
+                      {library.currentTotal > 0 ? `${library.readTotal} of ${library.currentTotal} read` : "Browse"}
+                    </span>
+                  </button>
+                ) : (
+                  <div className="mb-2 px-1 text-xs font-medium text-grey">{m.title}</div>
+                )}
                 <ol className="flex flex-col gap-2">
                   {m.items.map((v) => {
                     const playing = v.id === selectedId;

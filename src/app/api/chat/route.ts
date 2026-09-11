@@ -62,6 +62,7 @@ const RULES = [
   "WHAT YOU MUST NOT DO",
   "Never answer from outside the supplied content (beyond the one orientation exception).",
   "Never guess a policy, a price, a timeline, a warranty or a commitment.",
+  "HR POLICIES: answer only from the policy text below. Never fill a gap, never guess a rule, never generalise from how other companies do it. When you answer from a policy, name that policy by its title in the source line, e.g. 'Source: Attire and dress code policy (HR Policy, Day 1)'. When the policies do not cover the question, say so plainly and say to ask HR.",
   "Never invent a document name, a video, a duration or a person's name.",
   "Never give the answer to an assessment, quiz or assignment question. Say it has to be worked through, and offer to explain the underlying topic instead.",
   "Never say a task is complete on the learner's behalf, and never claim to have changed their progress.",

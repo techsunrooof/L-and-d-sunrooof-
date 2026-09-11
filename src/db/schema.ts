@@ -45,6 +45,26 @@ export const submissions = sqliteTable(
   (t) => [primaryKey({ columns: [t.learnerId, t.itemId] })],
 );
 
+/**
+ * Per learner, per HR policy document, per VERSION: "I have read this policy".
+ *
+ * The version is part of the key. A new version of a document has no rows, so
+ * it shows as unread for everyone, and an old tick can never be carried onto
+ * changed text — the old row stays as history. There is no delete path in the
+ * app: a learner cannot undo a tick; correcting one is an admin action.
+ */
+export const policyAcknowledgements = sqliteTable(
+  "policy_acknowledgements",
+  {
+    learnerId: text("learner_id").notNull(),
+    itemId: text("item_id").notNull(),
+    version: integer("version").notNull(),
+    acknowledgedAt: integer("acknowledged_at").notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.learnerId, t.itemId, t.version] })],
+);
+
 export type Learner = typeof learners.$inferSelect;
 export type ItemProgressRow = typeof itemProgress.$inferSelect;
 export type SubmissionRow = typeof submissions.$inferSelect;
+export type PolicyAcknowledgementRow = typeof policyAcknowledgements.$inferSelect;

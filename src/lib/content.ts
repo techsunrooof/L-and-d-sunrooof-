@@ -120,8 +120,49 @@ export type VideoItem = ItemBase & {
   thumbnail: string | null;
 };
 
+/*
+  HR Policy documents (Day 1, module "HR Policy"). A policy is an ordinary
+  document item — it never gates, it is never an assessment — carrying this
+  extra metadata. `version` is what makes the read tick honest: a tick is
+  stored against a version, so uploading a new version shows as unread for
+  everyone and no old tick is ever carried onto changed text.
+*/
+export type PolicyStatus = "current" | "withdrawn";
+
+export type PolicyMeta = {
+  category: string;
+  /** One plain line on what the document covers. */
+  description: string;
+  /** The portal's version counter for this document. Bump it on every new
+   *  upload — never edit a document's text without bumping it. */
+  version: number;
+  /** Who uploaded it. null = not recorded (never guessed). */
+  uploadedBy: string | null;
+  /** When this version entered the portal, YYYY-MM-DD. */
+  uploadedOn: string;
+  /** Withdrawn policies stay in place, clearly labelled — never deleted. */
+  status: PolicyStatus;
+  /** The original file exactly as supplied, for Download. Lives in
+   *  media/documents/originals/. null when only a PDF is held. */
+  original: { file: string; mime: string; label: string } | null;
+};
+
+/** A category card in the HR Policy module. Only categories that actually hold
+ *  a document are listed — no empty or filler categories. */
+export type PolicyCategory = { id: string; name: string; description: string };
+
+export const POLICY_CATEGORIES: PolicyCategory[] = [
+  {
+    id: "dress-code-grooming",
+    name: "Dress code and grooming",
+    description: "What to wear, and how to present yourself, at work and with clients.",
+  },
+];
+
 export type DocumentItem = ItemBase & {
   kind: "document";
+  /** Present only on HR Policy documents. */
+  policy?: PolicyMeta;
   /** Served through /api/document/[id]; null when the file isn't in yet. */
   file: string | null;
   sizeLabel: string | null;
@@ -142,6 +183,10 @@ export type Module = {
   order: number;
   title: string;
   items: ModuleItem[];
+  /** "policy" = the Day page renders this module as category cards and a
+   *  reader rather than a plain list. Everything else about it — locking,
+   *  the home expansion, progress — works exactly like any other module. */
+  library?: "policy";
 };
 
 /** An in-person schedule item (§5) — NOT a portal module. Shown as a distinct,
@@ -878,8 +923,7 @@ export const MODULES: Module[] = [
     items: [
       pendingDoc("d1-doc-welcome-kit", "Welcome kit"),
       pendingDoc("d1-doc-hr-policies", "HR policies"),
-      // LOADED — dress code policy (HR deck, transcribed verbatim as an article).
-      { kind: "document", id: "d1-doc-attire", number: "", title: "Attire and dress code policy", file: null, sizeLabel: null, sections: DRESS_CODE_SECTIONS },
+      // The attire and dress code policy MOVED to the HR Policy module (d1m5).
       pendingDoc("d1-doc-vision", "Vision document"),
       // LOADED — the vision alignment assessment (HR file, transcribed verbatim).
       { kind: "assessment", id: "d1-vision-assessment", number: "", title: "Vision alignment assessment", assessment: VISION_ASSESSMENT },
@@ -892,6 +936,35 @@ export const MODULES: Module[] = [
       // stored in the private Supabase bucket, streamed through the
       // unlock-checked /api/video route. Counts toward progress like the rest.
       { kind: "video", id: "d1-company-policy", number: "1.6", title: "Company policy", durationSeconds: 3573, src: "/api/video/d1-company-policy", youtubeId: null, thumbnail: "/photos/poster-d1-company-policy.jpg" },
+    ],
+  },
+  {
+    // HR Policy — content owned by HR at SUNROOOF (Komal). Nothing here is
+    // written by the build: a document appears only once HR supplies it.
+    // An HR-owned assessment can attach later as an assessment item, the same
+    // way assessments attach to every other module. None is built — no
+    // questions exist.
+    id: "d1m5", day: 1, order: 5, title: "HR Policy", library: "policy",
+    items: [
+      // MOVED here from "Documents and assessment" — same id, so nothing that
+      // pointed at it breaks. Text transcribed verbatim from HR's SUNROOOF deck.
+      {
+        kind: "document", id: "d1-doc-attire", number: "", title: "Attire and dress code policy",
+        file: null, sizeLabel: null, sections: DRESS_CODE_SECTIONS,
+        policy: {
+          category: "dress-code-grooming",
+          description: "Attire and grooming standards for men and women, everyday and for client meetings.",
+          version: 1,
+          uploadedBy: null, // not recorded when the deck was supplied
+          uploadedOn: "2026-09-02", // the day it entered the portal (commit 5936520)
+          status: "current",
+          original: {
+            file: "d1-doc-attire-v1.pptx",
+            mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            label: "PowerPoint · 156 KB",
+          },
+        },
+      },
     ],
   },
 
